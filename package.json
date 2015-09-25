@@ -1,0 +1,15 @@
+{
+  "name": "Platypus",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./index.js",
+  "devDependencies": {},
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "scripts": {
+    "test": "grunt test"
+  },
+  "dependencies": {
+  }
+}

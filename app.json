@@ -1,0 +1,16 @@
+{
+  "name": "Platypus",
+  "entities": [
+    {
+      "id": "contact",
+      "name": "Contact",
+      "pluralName": "Contacts"
+    },
+    {
+      "id": "account",
+      "name": "Account",
+      "pluralName": "Accounts"
+    }
+  ],
+  "property1":{ "value1": "original value"}
+}
