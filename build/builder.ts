@@ -1,6 +1,8 @@
 /// <reference path="../typings/tsd.d.ts" />
+/// <reference path="../typings/ejs.d.ts" />
 import * as path from "path";
 import * as fs from "fs";
+import * as ejs from "ejs";
 
 export class Task {
 	name: string;
@@ -9,12 +11,14 @@ export class Task {
 
 export class Template {
 	id: string;
+	fullPath:string;
+	module:string;
 }
 
 export class Builder {
 
 	private _tasks: Array<Task> = [];
-	private _templates: Array<Template> = [];
+	public _templates: Array<Template> = [];
 
 	public task(eventName, action:(rootPath:string, appDef, element?) => any): void {
 		// TODO: Check if the task already exist
@@ -120,9 +124,16 @@ export class Builder {
 		return object1;
 	}
 
+	private fs_writeFile(obj,path:string){
+		return new Promise<NodeJS.ErrnoException>((resolve, reject)=>{
+			fs.writeFile(path, obj, error=> {if(error)reject(error); else resolve();});	
+		});
+	}
+
+
 	private saveJSON(obj, path:string){
 		var objStr = JSON.stringify(obj, null, 4);
-		fs.writeFile(path, objStr);
+		return this.fs_writeFile(obj,path);
 	}
 
 	private buildAppDef(installedModules:Array<string>, rootModule:NodeModule){
@@ -138,47 +149,130 @@ export class Builder {
 		return appDef;
 	}
 	
-	private loadBuildTasks(installedModules:Array<string>, rootModule:NodeModule, builder:Builder){
+	private loadBuildTasks(installedModules:Array<string>, rootModule:NodeModule){
 		for (var i = 0; i < installedModules.length; i++) {
 			var installedModule = installedModules[i];
 			var buildTaskModuleId = path.join(installedModule, "build/buildTasks").replace("\\","/");
 			var buildTaskModule = this.tryGetModule(buildTaskModuleId, rootModule);
 			if(buildTaskModule) {
-				buildTaskModule(builder);
+				buildTaskModule(this);
 			}
 		}
 	}
 	
 	
-	private getTemplates(installedModules:Array<string>, rootModule:NodeModule){
-		return new Promise<Array<Template>>((resolve, reject)=>{
-			// TODO: Make it recursive
+	private fs_exists(path:string):Promise<boolean>{
+		return new Promise<boolean>(resolve=>{
+			fs.exists(path, x=>resolve(x))
+		});
+	}
+	
+	private fs_readdir(path:string){
+		return new Promise<string[]>((resolve,reject)=>{
+			fs.readdir(path,(err,files)=>{
+				if(err){
+					reject(err);
+				}else{
+					resolve(files);
+				}
+			});
+		});
+	}
+
+	private fs_readFile(path:string){
+		return new Promise<Buffer>((resolve,reject)=>{
+			fs.readFile(path,(err,data)=>{
+				if(err){
+					reject(err);
+				}else{
+					resolve(data);
+				}
+			});
+		});
+	}
+
+	
+	private getTemplatesFromDir(moduleName:string, dirPath:string){
+		return new Promise<Template[]>(resolve=>{
 			var templates = new Array<Template>();
-			for (var i = 0; i < installedModules.length; i++) {
-				var installedModule = installedModules[i];
-				var rootModuleDir = path.dirname(rootModule.filename);
-				var templatesModuleDir = path.join(rootModuleDir, "node_modules", installedModule, "templates");
-				((dirPath)=>{
-					fs.exists(dirPath,function(exists){
-					if(exists){
-						fs.readdir(dirPath, function(err, files){
-							if(!err){
-								for (var j = 0; j < files.length; j++) {
-									var templateFile = files[j];
-									var template = new Template();
-									template.id = templateFile;
-									templates.push(template);
-									console.log(templateFile);
-								}
-							}
-						});					
-					}
-				})})(templatesModuleDir);
-		}});
+			this.fs_exists(dirPath).then(exists=>{
+				if(exists){
+					this.fs_readdir(dirPath).then(files=>{
+						for (var i = 0; i < files.length; i++) {
+							var templateFile = files[i];
+							var template = new Template();
+							template.id = templateFile;
+							template.fullPath = path.join(dirPath, templateFile);
+							template.module = moduleName;
+							templates.push(template);
+						}
+						resolve(templates);
+					})
+				}
+				else{
+					resolve([]);
+				}
+			})
+		});
+	}
+	
+	private getTemplates(installedModules:Array<string>, rootPath:string){
+		var promises = new Array<Promise<Template[]>>();
+		// TODO: Make it recursive
+		for (var i = 0; i < installedModules.length; i++) {
+			var installedModule = installedModules[i];
+			var templatesModuleDir = path.join(rootPath, "node_modules", installedModule, "templates");
+			promises.push(this.getTemplatesFromDir(installedModule,templatesModuleDir));
+		}
+		return new Promise<Template[]>(resolve=>Promise.all(promises).then(allTemplates=>{
+			var templates = new Array<Template>();
+			for (var i = 0; i < allTemplates.length; i++) {
+				templates = templates.concat(allTemplates[i]);
+			}
+			resolve(templates);	
+		}));
 	}	
+
+	private getTemplate(id:string):Template{
+		var template:Template=null;
+		for (var i = 0; i < this._templates.length; i++) {
+			var currentTemplate = this._templates[i];
+			if(currentTemplate.id==id){
+				template=currentTemplate;
+				break;
+			}
+		}
+		return template;
+	}
+	
+	private getTemplateContent(id:string){
+		return new Promise<string>((resolve,reject)=>{
+			var template = this.getTemplate(id);
+			if(template){
+				this.fs_readFile(template.fullPath).then(data=>{
+					resolve(data.toString());
+				})
+				.catch(error=>reject(error));
+			}
+			else{
+				reject("template not found");
+			}
+		});
+	}
 
 	public runTemplateIfExists(templateId:string,appDef, item, destPath:string){
 		// http://ejs.co/
+		
+		this.getTemplateContent(templateId).then(content=>{
+			var result = ejs.render(content,{item:item, appDef:appDef});
+			fs.mkdir(path.dirname(destPath), error=>{
+				if(!error)
+					this.fs_writeFile(result,destPath).catch(error=>console.log(error));
+				else
+					console.log(error);
+			});
+			
+		});
 	}
 
 	public build(): void {
@@ -196,21 +290,23 @@ export class Builder {
 
 		this.saveJSON(appDef,path.join(rootPath,"/data/app.json"));
 	
-		this.loadBuildTasks(installedModules, rootModule, instance);
+		this.loadBuildTasks(installedModules, rootModule);
 	
 		// load templates
-		this.getTemplates(installedModules, rootModule).then((templates)=>this._templates = this._templates.concat(templates));
+		this.getTemplates(installedModules, rootPath).then((templates)=>{
+			this._templates = this._templates.concat(templates);
+		}).then(c=>{
+			// execute tasks for each app def item
+			this.buildItem(rootPath, appDef, "/", appDef);
+		});
 		
-	
-		// execute tasks for each app def item
-		this.buildItem(appDef, "/", appDef);
 	}
 
-	private buildItem(appDef, currentPath: string, currentAppElement): void {
+	private buildItem(rootPath:string, appDef, currentPath: string, currentAppElement): void {
 
 		// Run the task
 		var task: Task = this.getTaskByName(currentPath);
-		if (task) this.run(task, currentPath, appDef, currentAppElement);
+		if (task) this.run(task, rootPath, appDef, currentAppElement);
 	
 	
 		// Iterate trhough object properties (app def elements)
@@ -222,12 +318,12 @@ export class Builder {
 				if (Array.isArray(propValue)) {
 					for (var index = 0; index < propValue.length; index++) {
 						var arrayItem = propValue[index];
-						this.buildItem(appDef, currentPropPath, arrayItem);
+						this.buildItem(rootPath, appDef, currentPropPath, arrayItem);
 					}
 				}
 				else {
 					// TODO: avoid date instanceof Date
-					this.buildItem(appDef, currentPropPath, propValue);
+					this.buildItem(rootPath,appDef, currentPropPath, propValue);
 				}
 			}
 		}
