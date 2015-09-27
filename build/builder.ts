@@ -3,6 +3,7 @@
 import * as path from "path";
 import * as fs from "fs";
 import * as ejs from "ejs";
+import {gm_fs}  from "../util/fs"
 
 export class Task {
 	name: string;
@@ -23,6 +24,7 @@ export class Builder {
 	public task(eventName, action:(rootPath:string, appDef, element?) => any): void {
 		// TODO: Check if the task already exist
 		this._tasks.push({ name: eventName, action: action });
+				
 	}
 
 	public getTaskByName(name: string): Task {
@@ -265,7 +267,7 @@ export class Builder {
 		
 		this.getTemplateContent(templateId).then(content=>{
 			var result = ejs.render(content,{item:item, appDef:appDef});
-			fs.mkdir(path.dirname(destPath), error=>{
+			gm_fs.mkdirP(path.dirname(destPath), error=>{
 				if(!error)
 					this.fs_writeFile(result,destPath).catch(error=>console.log(error));
 				else
