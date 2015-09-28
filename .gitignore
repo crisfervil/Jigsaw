@@ -43,7 +43,8 @@ Temporary Items
 .apdisk
 
 node_modules
-typings
+typings/*.*
+typings/**/*.*
 !typings/custom.d.ts
 *.js
 !/templates/*.js

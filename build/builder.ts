@@ -1,12 +1,14 @@
 /// <reference path="../typings/tsd.d.ts" />
-/// <reference path="../typings/ejs.d.ts" />
-import * as path from "path";
-import * as fs from "fs";
-import * as ejs from "ejs";
+/// <reference path="../typings/custom.d.ts" />
+
+import path = require("path");
+import fs = require("fs");
+import ejs = require("ejs");
 import {gm_fs}  from "../util/fs"
 
 export class Task {
 	name: string;
+	mod: string;
 	action: (rootPath:string, appDef, element) => any;
 }
 
@@ -23,8 +25,10 @@ export class Builder {
 
 	public task(eventName, action:(rootPath:string, appDef, element?) => any): void {
 		// TODO: Check if the task already exist
-		this._tasks.push({ name: eventName, action: action });
-				
+		var newTask = new Task();
+		newTask.name=eventName;
+		newTask.action=action;
+		this._tasks.push(newTask);
 	}
 
 	public getTaskByName(name: string): Task {
@@ -264,7 +268,7 @@ export class Builder {
 
 	public runTemplateIfExists(templateId:string,appDef, item, destPath:string){
 		// http://ejs.co/
-		
+
 		this.getTemplateContent(templateId).then(content=>{
 			var result = ejs.render(content,{item:item, appDef:appDef});
 			gm_fs.mkdirP(path.dirname(destPath), error=>{
