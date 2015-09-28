@@ -1,3 +1,4 @@
+// <% output("app/routes/entities/" + item.name + ".js") %>
 /** router for entity <%= item.name %>, application <%= appDef.name %> */
 
 var express = require('express');

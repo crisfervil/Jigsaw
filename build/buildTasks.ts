@@ -19,7 +19,7 @@ export = function(builder:Builder):void{
     
     // call the template for generate the route
     console.log(rootPath);
-    builder.runTemplateIfExists("entities-route.js",appDef, entity, path.join(rootPath,"/app/routes/entities/", entity.name + ".js"));
+    builder.runTemplateIfExists("entities-route.js", appDef, entity);
     
     // run the db tasks
     builder.runTaskIfExists("/entities-db", rootPath, appDef, entity);

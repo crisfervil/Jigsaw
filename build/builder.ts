@@ -21,7 +21,8 @@ export class Template {
 export class Builder {
 
 	private _tasks: Array<Task> = [];
-	public _templates: Array<Template> = [];
+	private _templates: Array<Template> = [];
+	private _rootPath:string;
 
 	public task(eventName, action:(rootPath:string, appDef, element?) => any): void {
 		// TODO: Check if the task already exist
@@ -266,11 +267,13 @@ export class Builder {
 		});
 	}
 
-	public runTemplateIfExists(templateId:string,appDef, item, destPath:string){
-		// http://ejs.co/
-
+	public runTemplateIfExists(templateId:string,appDef, item, destPath?:string){
 		this.getTemplateContent(templateId).then(content=>{
-			var result = ejs.render(content,{item:item, appDef:appDef});
+			var resultOutputPath = null;
+			var templateParams = {item:item, appDef:appDef, output:(x)=>resultOutputPath=x};
+			var result = ejs.render(content,templateParams);
+			if(resultOutputPath) destPath = resultOutputPath;
+			if(!path.isAbsolute(destPath)) destPath = path.join(this._rootPath, destPath);
 			gm_fs.mkdirP(path.dirname(destPath), error=>{
 				if(!error)
 					this.fs_writeFile(result,destPath).catch(error=>console.log(error));
@@ -284,26 +287,32 @@ export class Builder {
 	public build(): void {
 		
 		var rootModule = this.getRoot(module);
-		var rootPath = path.dirname(rootModule.filename);
 		var appPkg = rootModule.require("./package");
 		var installedModules = appPkg.config.platypus.packages;
 		var appDef = this.buildAppDef(installedModules, rootModule);
+		this._rootPath = path.dirname(rootModule.filename);
 		
 		// merge with main app def
 		var mainAppDef = this.tryGetModule("./app.json", rootModule);
 		if(mainAppDef)
 			appDef = this.extend(appDef, mainAppDef);
 
-		this.saveJSON(appDef,path.join(rootPath,"/data/app.json"));
+		var appDefDestPath = path.join(this._rootPath,"/data/app.json");
+		gm_fs.mkdirP(path.dirname(appDefDestPath),error=>{
+			if(!error)
+				this.saveJSON(JSON.stringify(appDef,null,3),appDefDestPath);
+			else
+				console.log(error);
+		})
 	
 		this.loadBuildTasks(installedModules, rootModule);
 	
 		// load templates
-		this.getTemplates(installedModules, rootPath).then((templates)=>{
+		this.getTemplates(installedModules, this._rootPath).then((templates)=>{
 			this._templates = this._templates.concat(templates);
 		}).then(c=>{
 			// execute tasks for each app def item
-			this.buildItem(rootPath, appDef, "/", appDef);
+			this.buildItem(this._rootPath, appDef, "/", appDef);
 		});
 		
 	}
