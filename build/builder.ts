@@ -22,7 +22,11 @@ export class Builder {
 
 	private _tasks: Array<Task> = [];
 	private _templates: Array<Template> = [];
-	private _rootPath:string;
+	private _workingDir:string;
+	
+	constructor(workingDir?:string){
+		this._workingDir = workingDir;
+	}
 
 	public task(eventName, action:(appDef, element?) => any): void {
 		// TODO: Check if the task already exist
@@ -70,11 +74,10 @@ export class Builder {
 		return root;
 	}
 	
-	private tryGetModule(moduleId:string, parentModule?:NodeModule){
+	private tryGetModule(moduleId:string){
 		var result = null;
-		if(!parentModule) parentModule=parentModule;
 		try{
-			result = parentModule.require(moduleId);
+			result = require(moduleId);
 		}catch(e){}
 		
 		return result;
@@ -146,12 +149,12 @@ export class Builder {
 		return this.fs_writeFile(objStr,path);
 	}
 
-	private buildAppDef(installedModules:Array<string>, rootModule:NodeModule){
+	private buildAppDef(installedModules:Array<string>, workingDir:string){
 		var appDef={};
 		for (var i = 0; i < installedModules.length; i++) {
 			var installedModule = installedModules[i];
-			var appDefModuleId = path.join(installedModule, "app").replace("\\","/");
-			var moduleAppDef = this.tryGetModule(appDefModuleId, rootModule);
+			var appDefModuleId = path.join(workingDir, "node_modules", installedModule, "app");
+			var moduleAppDef = this.tryGetModule(appDefModuleId);
 			if(moduleAppDef) {
 				appDef = this.extend(appDef, moduleAppDef);
 			}
@@ -159,11 +162,11 @@ export class Builder {
 		return appDef;
 	}
 	
-	private loadBuildTasks(installedModules:Array<string>, rootModule:NodeModule){
+	private loadBuildTasks(installedModules:Array<string>, workingDir:string){
 		for (var i = 0; i < installedModules.length; i++) {
 			var installedModule = installedModules[i];
-			var buildTaskModuleId = path.join(installedModule, "build/buildTasks").replace("\\","/");
-			var buildTaskModule = this.tryGetModule(buildTaskModuleId, rootModule);
+			var buildTaskModuleId = path.join(workingDir, "node_modules", installedModule, "build/buildTasks");
+			var buildTaskModule = this.tryGetModule(buildTaskModuleId);
 			if(buildTaskModule) {
 				buildTaskModule(this);
 			}
@@ -202,8 +205,9 @@ export class Builder {
 	}
 
 	
-	private getTemplatesFromDir(moduleName:string, dirPath:string){
+	private getTemplatesFromModule(moduleName:string, workingDir:string){
 		return new Promise<Template[]>(resolve=>{
+			var dirPath = path.join(workingDir, "node_modules", moduleName, "templates");
 			var templates = new Array<Template>();
 			this.fs_exists(dirPath).then(exists=>{
 				if(exists){
@@ -220,7 +224,7 @@ export class Builder {
 								template.id = templateFile;	
 							}
 							
-							template.path = path.relative(path.join(this._rootPath, "node_modules", moduleName), 
+							template.path = path.relative(path.join(workingDir, "node_modules", moduleName), 
 															path.join(dirPath, templateFile));
 							template.module = moduleName;
 							templates.push(template);
@@ -235,13 +239,12 @@ export class Builder {
 		});
 	}
 	
-	private getTemplates(installedModules:Array<string>, rootPath:string){
+	private getTemplates(installedModules:Array<string>, workingDir:string){
 		var promises = new Array<Promise<Template[]>>();
 		// TODO: Make it recursive
 		for (var i = 0; i < installedModules.length; i++) {
-			var installedModule = installedModules[i];
-			var templatesModuleDir = path.join(rootPath, "node_modules", installedModule, "templates");
-			promises.push(this.getTemplatesFromDir(installedModule,templatesModuleDir));
+			var moduleName = installedModules[i];
+			promises.push(this.getTemplatesFromModule(moduleName,workingDir));
 		}
 		return new Promise<Template[]>(resolve=>Promise.all(promises).then(allTemplates=>{
 			var templates = new Array<Template>();
@@ -283,7 +286,10 @@ export class Builder {
 					var result = ejs.render(content,templateParams);
 					
 					if(resultOutputPath) destPath = resultOutputPath;
-					if(!path.isAbsolute(destPath)) destPath = path.join(this._rootPath, destPath);
+					if(!path.isAbsolute(destPath)){
+						// TODO: Change the working dir for the output dir
+						destPath = path.join(this._workingDir, destPath);
+					} 
 					gm_fs.mkdirP(path.dirname(destPath), error=>{
 						if(!error)
 							this.fs_writeFile(result,destPath)
@@ -303,18 +309,21 @@ export class Builder {
 	
 	public build(): void {
 		
-		var rootModule = this.getRoot(module);
-		var appPkg = rootModule.require("./package");
+		var pkgId = path.join(this._workingDir,"./package");
+		var appPkg = require(pkgId);
 		var installedModules = appPkg.config.greenmouse.packages;
-		var appDef = this.buildAppDef(installedModules, rootModule);
-		this._rootPath = path.dirname(rootModule.filename);
+		
+		var appDef = this.buildAppDef(installedModules, this._workingDir);
 		
 		// merge with main app def
-		var mainAppDef = this.tryGetModule("./app.json", rootModule);
+		var mainAppDefModuleId = path.join(this._workingDir, "./app.json");
+		var mainAppDef = this.tryGetModule(mainAppDefModuleId);
 		if(mainAppDef)
 			appDef = this.extend(appDef, mainAppDef);
 
-		var appDefDestPath = path.join(this._rootPath,"/data/app.json");
+		// save the app definition to the data folder
+		var appDefDestPath = path.join(this._workingDir,"/data/app.json");
+		//TODO: create a Promised version of mkdirP
 		gm_fs.mkdirP(path.dirname(appDefDestPath),error=>{
 			if(!error)
 				this.saveJSON(JSON.stringify(appDef,null,3),appDefDestPath);
@@ -322,15 +331,16 @@ export class Builder {
 				throw error;
 		});
 		
-		//console.log(appDef);
+		console.log(appDef);
 	
-		this.loadBuildTasks(installedModules, rootModule);
+		// Load tasks...
+		this.loadBuildTasks(installedModules, this._workingDir);
 	
 		console.log("Tasks:");
 		console.log(this._tasks);
 	
 		// load templates
-		this.getTemplates(installedModules, this._rootPath).then((templates)=>{
+		this.getTemplates(installedModules, this._workingDir).then((templates)=>{
 			this._templates = this._templates.concat(templates);
 		}).then(c=>{
 			
@@ -376,6 +386,3 @@ export class Builder {
 		}
 	}
 }
-
-/** Singleton instance of the builder object */
-export var instance: Builder = new Builder();
