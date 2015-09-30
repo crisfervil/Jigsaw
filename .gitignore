@@ -48,3 +48,4 @@ typings/**/*.*
 !typings/custom.d.ts
 *.js
 !/templates/*.js
+*.js.map

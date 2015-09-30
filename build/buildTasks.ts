@@ -19,9 +19,9 @@ export = function(builder:Builder):void{
     
     // call the template for generate the route
     return builder.runTemplateIfExists("entities-route", appDef, entity)
-    .then(      
-      // run the db tasks
-      builder.runTaskIfExists("/entities-db", appDef, entity));
+    //.then(      
+    //  // run the db tasks
+    //  builder.runTaskIfExists("/entities-db", appDef, entity));
   });
 
   builder.task("/entities-db",function(appDef, entity)
