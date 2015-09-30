@@ -9,12 +9,12 @@ import {gm_fs}  from "../util/fs"
 export class Task {
 	name: string;
 	mod: string;
-	action: (rootPath:string, appDef, element) => any;
+	action: (appDef, element) => any;
 }
 
 export class Template {
 	id: string;
-	fullPath:string;
+	path:string;
 	module:string;
 }
 
@@ -24,7 +24,7 @@ export class Builder {
 	private _templates: Array<Template> = [];
 	private _rootPath:string;
 
-	public task(eventName, action:(rootPath:string, appDef, element?) => any): void {
+	public task(eventName, action:(appDef, element?) => any): void {
 		// TODO: Check if the task already exist
 		var newTask = new Task();
 		newTask.name=eventName;
@@ -45,19 +45,22 @@ export class Builder {
 		return task;
 	}
 
-	public runTask(taskName: string, rootPath:string, appDef, appElement): void {
+	public runTask(taskName: string, appDef, appElement): void {
 		var task = this.getTaskByName(taskName);
-		this.run(task, rootPath, appDef, appElement);
+		//this.run(task, rootPath, appDef, appElement);
+		this.run.call(this, appDef, appElement);
 	}
 
-	public runTaskIfExists(taskName: string, rootPath:string, appDef, appElement): void {
-		var task = this.getTaskByName(taskName);
-		if (task != null) this.run(task, rootPath, appDef, appElement);
+	public runTaskIfExists(taskName: string, appDef, appElement){
+		return new Promise((resolve, reject)=>{
+			var task = this.getTaskByName(taskName);
+			if (task != null) this.run(task, appDef, appElement);
+		});
 	}
 
-	private run(task: Task, rootPath:string, appDef, appElement): void {
-		console.log("Running task [%s]...", task.name);
-		task.action(rootPath, appDef, appElement);
+	private run(task: Task, appDef, appElement): void {
+		console.log("Running task %s...", task.name);
+		task.action.call(this, appDef, appElement);
 		console.log("done");
 	}
 	
@@ -67,11 +70,11 @@ export class Builder {
 		return root;
 	}
 	
-	private tryGetModule(moduleId:string, m?:NodeModule){
+	private tryGetModule(moduleId:string, parentModule?:NodeModule){
 		var result = null;
-		if(!m) m=module;
+		if(!parentModule) parentModule=parentModule;
 		try{
-			result = m.require(moduleId);
+			result = parentModule.require(moduleId);
 		}catch(e){}
 		
 		return result;
@@ -132,7 +135,7 @@ export class Builder {
 	}
 
 	private fs_writeFile(obj,path:string){
-		return new Promise<NodeJS.ErrnoException>((resolve, reject)=>{
+		return new Promise((resolve, reject)=>{
 			fs.writeFile(path, obj, error=> {if(error)reject(error); else resolve();});	
 		});
 	}
@@ -140,7 +143,7 @@ export class Builder {
 
 	private saveJSON(obj, path:string){
 		var objStr = JSON.stringify(obj, null, 4);
-		return this.fs_writeFile(obj,path);
+		return this.fs_writeFile(objStr,path);
 	}
 
 	private buildAppDef(installedModules:Array<string>, rootModule:NodeModule){
@@ -208,8 +211,17 @@ export class Builder {
 						for (var i = 0; i < files.length; i++) {
 							var templateFile = files[i];
 							var template = new Template();
-							template.id = templateFile;
-							template.fullPath = path.join(dirPath, templateFile);
+							
+							var templateExt = path.extname(templateFile);
+							if(templateExt){
+								template.id = templateFile.substr(0, templateFile.length - templateExt.length);
+							}
+							else{
+								template.id = templateFile;	
+							}
+							
+							template.path = path.relative(path.join(this._rootPath, "node_modules", moduleName), 
+															path.join(dirPath, templateFile));
 							template.module = moduleName;
 							templates.push(template);
 						}
@@ -252,43 +264,48 @@ export class Builder {
 		return template;
 	}
 	
-	private getTemplateContent(id:string){
+	private getTemplateContent(template:Template){
 		return new Promise<string>((resolve,reject)=>{
-			var template = this.getTemplate(id);
-			if(template){
-				this.fs_readFile(template.fullPath).then(data=>{
-					resolve(data.toString());
-				})
-				.catch(error=>reject(error));
-			}
-			else{
-				reject("template not found");
-			}
+			this.fs_readFile(template.path).then(data=>{
+				resolve(data.toString());
+			})
+			.catch(error=>{reject(error);});
 		});
 	}
 
 	public runTemplateIfExists(templateId:string,appDef, item, destPath?:string){
-		this.getTemplateContent(templateId).then(content=>{
-			var resultOutputPath = null;
-			var templateParams = {item:item, appDef:appDef, output:(x)=>resultOutputPath=x};
-			var result = ejs.render(content,templateParams);
-			if(resultOutputPath) destPath = resultOutputPath;
-			if(!path.isAbsolute(destPath)) destPath = path.join(this._rootPath, destPath);
-			gm_fs.mkdirP(path.dirname(destPath), error=>{
-				if(!error)
-					this.fs_writeFile(result,destPath).catch(error=>console.log(error));
-				else
-					console.log(error);
-			});
-			
+		return new Promise((resolve, reject)=>{
+			var template = this.getTemplate(templateId);
+			if(template){
+				this.getTemplateContent(template).then(content=>{
+					var resultOutputPath = null;
+					var templateParams = {item:item, appDef:appDef, output:(x)=>resultOutputPath=x};
+					var result = ejs.render(content,templateParams);
+					
+					if(resultOutputPath) destPath = resultOutputPath;
+					if(!path.isAbsolute(destPath)) destPath = path.join(this._rootPath, destPath);
+					gm_fs.mkdirP(path.dirname(destPath), error=>{
+						if(!error)
+							this.fs_writeFile(result,destPath)
+							.then(resolve)
+							.catch(error=>reject(error));
+						else
+							reject(error);
+					});
+				}).catch(error=>reject(error));
+			}
+			else
+			{
+				resolve();
+			}
 		});
 	}
-
+	
 	public build(): void {
 		
 		var rootModule = this.getRoot(module);
 		var appPkg = rootModule.require("./package");
-		var installedModules = appPkg.config.platypus.packages;
+		var installedModules = appPkg.config.greenmouse.packages;
 		var appDef = this.buildAppDef(installedModules, rootModule);
 		this._rootPath = path.dirname(rootModule.filename);
 		
@@ -302,26 +319,41 @@ export class Builder {
 			if(!error)
 				this.saveJSON(JSON.stringify(appDef,null,3),appDefDestPath);
 			else
-				console.log(error);
-		})
+				throw error;
+		});
+		
+		//console.log(appDef);
 	
 		this.loadBuildTasks(installedModules, rootModule);
+	
+		console.log("Tasks:");
+		console.log(this._tasks);
 	
 		// load templates
 		this.getTemplates(installedModules, this._rootPath).then((templates)=>{
 			this._templates = this._templates.concat(templates);
 		}).then(c=>{
-			// execute tasks for each app def item
-			this.buildItem(this._rootPath, appDef, "/", appDef);
+			
+			console.log("Templates:");
+			console.log(this._templates);
+			
+			// After the templates finished loading...
+			// begin building the app
+			this.buildApp(appDef);
+				
 		});
 		
 	}
 
-	private buildItem(rootPath:string, appDef, currentPath: string, currentAppElement): void {
+	private buildApp(appDef:any){
+		this.buildItem(appDef, "/", appDef);		
+	}
+
+	private buildItem(appDef, currentPath: string, currentAppElement): void {
 
 		// Run the task
 		var task: Task = this.getTaskByName(currentPath);
-		if (task) this.run(task, rootPath, appDef, currentAppElement);
+		if (task) this.run(task, appDef, currentAppElement);
 	
 	
 		// Iterate trhough object properties (app def elements)
@@ -333,16 +365,17 @@ export class Builder {
 				if (Array.isArray(propValue)) {
 					for (var index = 0; index < propValue.length; index++) {
 						var arrayItem = propValue[index];
-						this.buildItem(rootPath, appDef, currentPropPath, arrayItem);
+						this.buildItem(appDef, currentPropPath, arrayItem);
 					}
 				}
 				else {
 					// TODO: avoid date instanceof Date
-					this.buildItem(rootPath,appDef, currentPropPath, propValue);
+					this.buildItem(appDef, currentPropPath, propValue);
 				}
 			}
 		}
 	}
 }
 
+/** Singleton instance of the builder object */
 export var instance: Builder = new Builder();

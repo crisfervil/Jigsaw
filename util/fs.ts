@@ -1,7 +1,7 @@
 /// <reference path="../typings/tsd.d.ts" />
 
-var path = require('path');
-var fs = require('fs');
+import path = require('path');
+import fs = require('fs');
 var _0777 = parseInt('0777', 8);
 
 export module gm_fs {
