@@ -49,5 +49,5 @@ $ npm link greenmouse
 ```
 14 - Run Green Mouse installer
 ```
-node node_modules/greenmouse/run install
+$ node node_modules/greenmouse/run install
 ```
