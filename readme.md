@@ -34,7 +34,7 @@ $ tsd install
 ```
 9 - Compile Green Mouse
 ```
-$ tsc --module commonjs --target es5 -p .
+$ tsc -p .
 ```
 10 - Link greenmouse (https://docs.npmjs.com/cli/link)
 ```

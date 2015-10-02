@@ -7,8 +7,8 @@ import ejs = require("ejs");
 import {gm_fs}  from "../util/fs"
 
 export class Task {
-	name: string;
-	mod: string;
+	id: string;
+	module: string;
 	action: (appDef, element) => any;
 }
 
@@ -31,32 +31,41 @@ export class Builder {
 	public task(eventName, action:(appDef, element?) => any): void {
 		// TODO: Check if the task already exist
 		var newTask = new Task();
-		newTask.name=eventName;
+		newTask.id=eventName;
 		newTask.action=action;
 		this._tasks.push(newTask);
 	}
 
-	public getTaskByName(name: string): Task {
-		var task: Task = null;
+	public getTasksById(id: string): Array<Task> {
+		var task: Array<Task> = [];
 
 		for (var index = 0; index < this._tasks.length; index++) {
 			var current = this._tasks[index];
-			if (current.name == name) {
-				task = current;
-				break;
+			if (current.id == id) {
+				task.push(current);
 			}
 		}
 		return task;
 	}
 
 	public runTask(taskName: string, appDef, appElement) {
-		var task = this.getTaskByName(taskName);
-		return this.run(task, appDef, appElement);
+		var tasks = this.getTasksById(taskName);
+		return this.runAll(tasks,appDef,appElement);
+	}
+
+	private runAll(tasks: Task[], appDef, appElement) {
+		var promises : Array<Promise<any>> = [];
+		for (var i = 0; i < tasks.length; i++) {
+			var task = tasks[i];
+			var p = this.run(task, appDef, appElement);
+			promises.push(p);
+		}
+		return Promise.all(promises);
 	}
 
 	private run(task: Task, appDef, appElement) {
 		return new Promise((resolve, reject)=>{
-			console.log("Running task %s...", task.name);
+			console.log("Running task %s...", task.id);
 			try {
 				var retVal = task.action.call(this, appDef, appElement);
 				if(retVal&&retVal instanceof Promise){
@@ -65,17 +74,17 @@ export class Builder {
 						.then(x=>resolve(rv))
 						.catch(err=>{
 							// Error executing the task
-							console.log("Error executing task %s: %s", task.name, err);
+							console.log("Error executing task %s: %s", task.id, err);
 							reject(err);});
 				}
 				else{
-					resolve(retVal);
+					resolve();
 					console.log("done!");
 				}
 			}
 			catch (err){
 				// Error executing the task
-				console.log("Error executing task %s: %s", task.name, err);
+				console.log("Error executing task %s: %s", task.id, err);
 				reject(err);				
 			}
 		});
@@ -215,7 +224,6 @@ export class Builder {
 		});
 	}
 
-	
 	private getTemplatesFromModule(moduleName:string, workingDir:string){
 		return new Promise<Template[]>(resolve=>{
 			var dirPath = path.join(workingDir, "node_modules", moduleName, "templates");
@@ -278,9 +286,10 @@ export class Builder {
 		return template;
 	}
 	
-	private getTemplateContent(template:Template){
+	private getTemplateContent(template:Template, workingDir:string){
 		return new Promise<string>((resolve,reject)=>{
-			this.fs_readFile(template.path).then(data=>{
+			var templatePath = path.join(workingDir,"node_modules", template.module,template.path);
+			this.fs_readFile(templatePath).then(data=>{
 				resolve(data.toString());
 			})
 			.catch(error=>{reject(error);});
@@ -290,7 +299,7 @@ export class Builder {
 	public runTemplate(templateId:string,appDef, item, destPath?:string){
 		return new Promise((resolve, reject)=>{
 			var template = this.getTemplate(templateId);
-			this.getTemplateContent(template)
+			this.getTemplateContent(template, this._workingDir)
 			.then(content=>{
 				
 				var resultOutputPath = null;
@@ -320,8 +329,8 @@ export class Builder {
 	
 	public build(): void {
 		
-		var pkgId = path.join(this._workingDir,"./package");
-		var appPkg = require(pkgId);
+		var appPkgId = path.join(this._workingDir,"./package");
+		var appPkg = require(appPkgId);
 		var installedModules = appPkg.config.greenmouse.packages;
 		
 		var appDef = this.buildAppDef(installedModules, this._workingDir);
@@ -337,7 +346,7 @@ export class Builder {
 		//TODO: create a Promised version of mkdirP
 		gm_fs.mkdirP(path.dirname(appDefDestPath),error=>{
 			if(!error)
-				this.saveJSON(JSON.stringify(appDef,null,3),appDefDestPath);
+				this.saveJSON(appDef,appDefDestPath);
 			else
 				throw error;
 		});
@@ -364,62 +373,53 @@ export class Builder {
 		});
 	}
 
-	private buildApp(appDef:any){
-		this.buildItem(appDef, "/", appDef);		
+	private buildApp(appDef:any):Promise<any>{
+		return this.buildItem(appDef, "/", appDef);		
 	}
 
-	private buildItem(appDef, currentPath: string, currentAppElement) {
+	private buildItem(appDef, currentPath: string, currentAppElement):Promise<any> {
 		// Run the task
-		var task: Task = this.getTaskByName(currentPath);
-		if (task) {
-			return this.run(task, appDef, currentAppElement)
-			.then(x=>this.buildItemChildren(appDef, currentPath, currentAppElement));
+		var tasks = this.getTasksById(currentPath);
+		if (tasks) {
+			return this.runAll(tasks, appDef, currentAppElement)
+			.then(
+				x=>this.buildItemChildren(appDef, currentPath, currentAppElement));
 		}
 		else {
 			return this.buildItemChildren(appDef, currentPath, currentAppElement);	
 		}
 	}
 	
-	private buildItemChildren(appDef, currentPath: string, currentAppElement):Thenable<{}>{
+	private buildItemChildren(appDef, currentPath: string, currentAppElement):Promise<any>{
 		// Iterate trhough object properties (app def elements)
-		for (var propName in currentAppElement) {
-			var propValue = currentAppElement[propName];
-			if (propValue != null && typeof propValue == "object") {
-				var currentPropPath = path.join(currentPath, propName).replace("\\", "/");
-				console.log(currentPropPath);
-				if (Array.isArray(propValue)) {
-					for (var index = 0; index < propValue.length; index++) {
-						var arrayItem = propValue[index];
-						this.buildItem(appDef, currentPropPath, arrayItem);
-					}
-				}
-				else {
-					// TODO: avoid date instanceof Date
-					this.buildItem(appDef, currentPropPath, propValue);
-				}
-			}
-		}
+		var objProps = Object.keys(currentAppElement);
+		return this.buildItemProperty(appDef,currentPath,currentAppElement,objProps,0);
 	}
 	
-	private buildItemProperty(appDef, currentPath: string, object, propsArray:Array<string>,currentPropIndex:number){
+	private buildItemProperty(appDef, currentPath: string, object, propsArray:Array<string>,currentPropIndex:number):Promise<any>{
 		if(currentPropIndex<propsArray.length){
 			var propName = propsArray[currentPropIndex];
 			var propValue = object[propName];
 			if (propValue != null && typeof propValue == "object") {
 				var currentPropPath = path.join(currentPath, propName).replace("\\", "/");
 				if (Array.isArray(propValue)) {
-						var arrayProp:Array<any> = propValue[currentPropIndex];
-						return this.buildItemArray(appDef, currentPath, arrayProp, 0);
+					var arrayProp:Array<any> = propValue;
+					return this.buildItemArray(appDef, currentPropPath, arrayProp, 0)
+					.then(x=>this.buildItemProperty(appDef,currentPath, object, propsArray, currentPropIndex+1));
 				}
 				else if (!(propValue instanceof Date)) {
-					return this.buildItem(appDef, currentPropPath, propValue);
+					return this.buildItem(appDef, currentPropPath, propValue)
+					.then(x=>this.buildItemProperty(appDef,currentPath, object, propsArray, currentPropIndex+1));
 				}
 			}
+			else
+			{
+				return this.buildItemProperty(appDef,currentPath, object, propsArray, currentPropIndex+1)
+			}
 		}
-		return Promise.resolve();
 	}
 	
-	private buildItemArray(appDef, currentPath: string, array:Array<any>,currentIndex:number){
+	private buildItemArray(appDef, currentPath: string, array:Array<any>,currentIndex:number):Promise<any>{
 		if(currentIndex<array.length) {
 			return this.buildItem(appDef, currentPath, array[currentIndex])
 					.then(x=>this.buildItemArray(appDef, currentPath, array, currentIndex+1));
