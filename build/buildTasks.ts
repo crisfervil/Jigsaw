@@ -1,5 +1,5 @@
 /// <reference path="../typings/tsd.d.ts" />
-import {Builder} from "builder";
+import {Builder} from "./builder";
 
 import util = require("util");
 import path = require("path");
@@ -18,21 +18,19 @@ export = function(builder:Builder):void{
     // do stuff for building the entity
     
     // call the template for generate the route
-    return builder.runTemplateIfExists("entities-route", appDef, entity)
-    //.then(      
-    //  // run the db tasks
-    //  builder.runTaskIfExists("/entities-db", appDef, entity));
+    return builder.runTemplate("entities-route", appDef, entity)
+    .then(x=>builder.runTask("/entities-db", appDef, entity));
+
   });
 
   builder.task("/entities-db",function(appDef, entity)
   { 
-    console.log("building db level for entity %s...", entity.name);
-    // do stuff for building the entity
+      console.log("building db level for entity %s...", entity.name);
   
     // depending on the entity connection, call others specific tasks
     if(entity.connection&&entity.connection.type){
       var taskName = util.format("/entities-db-%s",entity.connection.type);
-      builder.runTaskIfExists(taskName, appDef, entity);
+      builder.runTask(taskName, appDef, entity);
     }
     else
     {

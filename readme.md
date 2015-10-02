@@ -32,7 +32,7 @@ $ cd greenmouse
 ```
 $ tsd install
 ```
-9 - Compile greenmouse
+9 - Compile Green Mouse
 ```
 $ tsc --module commonjs --target es5 -p .
 ```
@@ -52,7 +52,7 @@ $ git clone https://github.com/crisfervil/GreenMouse.git greenmouse-app
 ```
 $ cd greenmouse-app
 ```
-14 - Link the the sample app with the Module
+14 - Link the the sample app with the module
 ```
 $ npm link greenmouse
 ```

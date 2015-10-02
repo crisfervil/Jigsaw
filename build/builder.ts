@@ -49,23 +49,36 @@ export class Builder {
 		return task;
 	}
 
-	public runTask(taskName: string, appDef, appElement): void {
+	public runTask(taskName: string, appDef, appElement) {
 		var task = this.getTaskByName(taskName);
-		//this.run(task, rootPath, appDef, appElement);
-		this.run.call(this, appDef, appElement);
+		return this.run(task, appDef, appElement);
 	}
 
-	public runTaskIfExists(taskName: string, appDef, appElement){
+	private run(task: Task, appDef, appElement) {
 		return new Promise((resolve, reject)=>{
-			var task = this.getTaskByName(taskName);
-			if (task != null) this.run(task, appDef, appElement);
+			console.log("Running task %s...", task.name);
+			try {
+				var retVal = task.action.call(this, appDef, appElement);
+				if(retVal&&retVal instanceof Promise){
+						var rv:Promise<any> = retVal;
+						rv
+						.then(x=>resolve(rv))
+						.catch(err=>{
+							// Error executing the task
+							console.log("Error executing task %s: %s", task.name, err);
+							reject(err);});
+				}
+				else{
+					resolve(retVal);
+					console.log("done!");
+				}
+			}
+			catch (err){
+				// Error executing the task
+				console.log("Error executing task %s: %s", task.name, err);
+				reject(err);				
+			}
 		});
-	}
-
-	private run(task: Task, appDef, appElement): void {
-		console.log("Running task %s...", task.name);
-		task.action.call(this, appDef, appElement);
-		console.log("done");
 	}
 	
 	private getRoot(m:NodeModule):NodeModule{
@@ -143,7 +156,6 @@ export class Builder {
 		});
 	}
 
-
 	private saveJSON(obj, path:string){
 		var objStr = JSON.stringify(obj, null, 4);
 		return this.fs_writeFile(objStr,path);
@@ -172,7 +184,6 @@ export class Builder {
 			}
 		}
 	}
-	
 	
 	private fs_exists(path:string):Promise<boolean>{
 		return new Promise<boolean>(resolve=>{
@@ -276,34 +287,34 @@ export class Builder {
 		});
 	}
 
-	public runTemplateIfExists(templateId:string,appDef, item, destPath?:string){
+	public runTemplate(templateId:string,appDef, item, destPath?:string){
 		return new Promise((resolve, reject)=>{
 			var template = this.getTemplate(templateId);
-			if(template){
-				this.getTemplateContent(template).then(content=>{
-					var resultOutputPath = null;
-					var templateParams = {item:item, appDef:appDef, output:(x)=>resultOutputPath=x};
-					var result = ejs.render(content,templateParams);
-					
-					if(resultOutputPath) destPath = resultOutputPath;
-					if(!path.isAbsolute(destPath)){
-						// TODO: Change the working dir for the output dir
-						destPath = path.join(this._workingDir, destPath);
-					} 
-					gm_fs.mkdirP(path.dirname(destPath), error=>{
-						if(!error)
-							this.fs_writeFile(result,destPath)
-							.then(resolve)
-							.catch(error=>reject(error));
-						else
-							reject(error);
-					});
-				}).catch(error=>reject(error));
-			}
-			else
-			{
-				resolve();
-			}
+			this.getTemplateContent(template)
+			.then(content=>{
+				
+				var resultOutputPath = null;
+				var templateParams = {item:item, appDef:appDef, output:(x)=>resultOutputPath=x};
+				
+				// render the template using ejs
+				// TODO: Allow other template engines
+				var result = ejs.render(content,templateParams);
+				
+				if(resultOutputPath) destPath = resultOutputPath;
+				if(!path.isAbsolute(destPath)){
+					// TODO: Change the working dir for the output dir
+					destPath = path.join(this._workingDir, destPath);
+				} 
+				gm_fs.mkdirP(path.dirname(destPath), error=>{
+					if(!error)
+						this.fs_writeFile(result,destPath)
+						.then(resolve)
+						.catch(error=>reject(error));
+					else
+						reject(error);
+				});
+			})
+			.catch(error=>reject(error));
 		});
 	}
 	
@@ -350,22 +361,26 @@ export class Builder {
 			// After the templates finished loading...
 			// begin building the app
 			this.buildApp(appDef);
-				
 		});
-		
 	}
 
 	private buildApp(appDef:any){
 		this.buildItem(appDef, "/", appDef);		
 	}
 
-	private buildItem(appDef, currentPath: string, currentAppElement): void {
-
+	private buildItem(appDef, currentPath: string, currentAppElement) {
 		// Run the task
 		var task: Task = this.getTaskByName(currentPath);
-		if (task) this.run(task, appDef, currentAppElement);
+		if (task) {
+			return this.run(task, appDef, currentAppElement)
+			.then(x=>this.buildItemChildren(appDef, currentPath, currentAppElement));
+		}
+		else {
+			return this.buildItemChildren(appDef, currentPath, currentAppElement);	
+		}
+	}
 	
-	
+	private buildItemChildren(appDef, currentPath: string, currentAppElement):Thenable<{}>{
 		// Iterate trhough object properties (app def elements)
 		for (var propName in currentAppElement) {
 			var propValue = currentAppElement[propName];
@@ -383,6 +398,31 @@ export class Builder {
 					this.buildItem(appDef, currentPropPath, propValue);
 				}
 			}
+		}
+	}
+	
+	private buildItemProperty(appDef, currentPath: string, object, propsArray:Array<string>,currentPropIndex:number){
+		if(currentPropIndex<propsArray.length){
+			var propName = propsArray[currentPropIndex];
+			var propValue = object[propName];
+			if (propValue != null && typeof propValue == "object") {
+				var currentPropPath = path.join(currentPath, propName).replace("\\", "/");
+				if (Array.isArray(propValue)) {
+						var arrayProp:Array<any> = propValue[currentPropIndex];
+						return this.buildItemArray(appDef, currentPath, arrayProp, 0);
+				}
+				else if (!(propValue instanceof Date)) {
+					return this.buildItem(appDef, currentPropPath, propValue);
+				}
+			}
+		}
+		return Promise.resolve();
+	}
+	
+	private buildItemArray(appDef, currentPath: string, array:Array<any>,currentIndex:number){
+		if(currentIndex<array.length) {
+			return this.buildItem(appDef, currentPath, array[currentIndex])
+					.then(x=>this.buildItemArray(appDef, currentPath, array, currentIndex+1));
 		}
 	}
 }
