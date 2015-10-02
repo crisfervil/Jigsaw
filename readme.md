@@ -1,5 +1,10 @@
-# install steps
+# Project description
+Green Mouse is an extensible DSL framework to build any type of applications
+
+# Install steps
 (This should get simpler after publishing in npm)
+
+Avoid 1 to 5 if you already have those tools installed
 
 1 - Install node js: https://nodejs.org
 
