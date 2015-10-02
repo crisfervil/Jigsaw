@@ -11,7 +11,7 @@
 ```
 $ npm install tsc -g
 ```
-5 - Definitely typed (http://definitelytyped.org)
+5 - Install Definitely typed (http://definitelytyped.org)
 ```
 $ npm install tsd -g
 ```
@@ -23,31 +23,35 @@ $ git clone https://github.com/crisfervil/GreenMouse.git greenmouse
 ```
 $ cd greenmouse
 ```
-8 - Compile greenmouse
+8 - Install definitely typed typings
+```
+$ tsd install
+```
+9 - Compile greenmouse
 ```
 $ tsc --module commonjs --target es5 -p .
 ```
-9 - Link greenmouse (https://docs.npmjs.com/cli/link)
+10 - Link greenmouse (https://docs.npmjs.com/cli/link)
 ```
 $ npm link	
 ```
-10- Move one dir up
+11- Move one dir up
 ```
 $ cd ..
 ```
-11 - Clone Green Mouse sample app
+12 - Clone Green Mouse sample app
 ```
 $ git clone https://github.com/crisfervil/GreenMouse.git greenmouse-app
 ```
-12 - Move to the sample app dir
+13 - Move to the sample app dir
 ```
 $ cd greenmouse-app
 ```
-13 - Link the the sample app with the Module
+14 - Link the the sample app with the Module
 ```
 $ npm link greenmouse
 ```
-14 - Run Green Mouse installer
+15 - Run Green Mouse installer
 ```
 $ node node_modules/greenmouse/run install
 ```
