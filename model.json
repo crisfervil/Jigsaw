@@ -1,55 +1,86 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://jsonschema.net",
+    "id":"http://json-schema.org",
+
+  "definitions": {
+    "entity": {
+      "id": "entity",
+      "type": "object",
+      "title": "entity",
+      "description": "Holds information about an entity in the system",
+      "name": "entity",
+      "properties": {
+        "id": {
+          "id": "id",
+          "type": "string",
+          "title": "Unique Id to reference an entity in the system",
+          "description": "Unique Id to reference an entity in the system",
+          "name": "Id"
+        },
+        "name": {
+          "id": "name",
+          "type": "string",
+          "title": "User friendly name of the entity",
+          "description": "User friendly name of the entity",
+          "name": "Name"
+        },
+        "pluralName": {
+          "id": "pluralName",
+          "type": "string",
+          "title": "Plural name of the entity",
+          "description": "Plural name of the entity",
+          "name": "Plural Name"
+        }
+      }
+    }
+  },
   "type": "object",
+  "title": "Application",
+  "description": "Root Object of the Application",
+  "name": "Application",
   "properties": {
     "name": {
-      "id": "http://jsonschema.net/name",
-      "type": "string"
+      "id": "name",
+      "type": "string",
+      "title": "Name schema.",
+      "description": "An explanation about the puropose of this instance described by this schema.",
+      "name": "name"
     },
     "entities": {
-      "id": "http://jsonschema.net/entities",
+      "id": "entities",
       "type": "array",
-      "items": [
-        {
-          "id": "http://jsonschema.net/entities/0",
-          "type": "object",
-          "properties": {
-            "id": {
-              "id": "http://jsonschema.net/entities/0/id",
-              "type": "string"
-            },
-            "name": {
-              "id": "http://jsonschema.net/entities/0/name",
-              "type": "string"
-            },
-            "pluralName": {
-              "id": "http://jsonschema.net/entities/0/pluralName",
-              "type": "string"
-            }
-          }
-        },
-        {
-          "id": "http://jsonschema.net/entities/1",
-          "type": "object",
-          "properties": {
-            "id": {
-              "id": "http://jsonschema.net/entities/1/id",
-              "type": "string"
-            },
-            "name": {
-              "id": "http://jsonschema.net/entities/1/name",
-              "type": "string"
-            },
-            "pluralName": {
-              "id": "http://jsonschema.net/entities/1/pluralName",
-              "type": "string"
-            }
-          }
+      "title": "Entities schema.",
+      "description": "An explanation about the puropose of this instance described by this schema.",
+      "name": "entities",
+      "items": {
+        "$ref": "http://json-schema.org#/definitions/entity"
+      }
+    },
+    "property1": {
+      "id": "property1",
+      "type": "object",
+      "title": "Property1 schema.",
+      "description": "An explanation about the puropose of this instance described by this schema.",
+      "name": "property1",
+      "properties": {
+        "value1": {
+          "id": "property1/value1",
+          "type": "string",
+          "title": "Value1 schema.",
+          "description": "An explanation about the puropose of this instance described by this schema.",
+          "name": "value1"
         }
-      ]
+      }
+    },
+    "property2": {
+      "id": "property2",
+      "type": "string",
+      "title": "Property2 schema.",
+      "description": "An explanation about the puropose of this instance described by this schema.",
+      "name": "property2"
     }
   },
   "required": [
-    "name"  ]
+    "name","entities"
+  ]
 }
