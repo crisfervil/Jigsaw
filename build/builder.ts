@@ -5,6 +5,7 @@ import path = require("path");
 import fs = require("fs");
 import ejs = require("ejs");
 import {gm_fs}  from "../util/fs"
+import jsonValidator = require('tv4');
 
 export class Task {
 	id: string;
@@ -170,17 +171,20 @@ export class Builder {
 		return this.fs_writeFile(objStr,path);
 	}
 
-	private buildAppDef(installedModules:Array<string>, workingDir:string){
-		var appDef={};
+	/**
+	 * Searches for json files in installed modules, merge found objects and returns the result
+	 */
+	private buildJson(installedModules:Array<string>, workingDir:string, fileName:string){
+		var jsonObj:any={};
 		for (var i = 0; i < installedModules.length; i++) {
 			var installedModule = installedModules[i];
-			var appDefModuleId = path.join(workingDir, "node_modules", installedModule, "app");
-			var moduleAppDef = this.tryGetModule(appDefModuleId);
-			if(moduleAppDef) {
-				appDef = this.extend(appDef, moduleAppDef);
+			var jsonFileId = path.join(workingDir, "node_modules", installedModule, fileName);
+			var moduleJsonObj = this.tryGetModule(jsonFileId);
+			if(moduleJsonObj) {
+				jsonObj = this.extend(jsonObj, moduleJsonObj);
 			}
 		}
-		return appDef;
+		return jsonObj;
 	}
 	
 	private loadBuildTasks(installedModules:Array<string>, workingDir:string){
@@ -329,20 +333,28 @@ export class Builder {
 	
 	public build(): void {
 		
-		var appPkgId = path.join(this._workingDir,"./package");
+		var appPkgId = path.join(this._workingDir,"package.json");
 		var appPkg = require(appPkgId);
 		var installedModules = appPkg.config.greenmouse.packages;
 		
-		var appDef = this.buildAppDef(installedModules, this._workingDir);
-		
+		var modelDef = this.buildJson(installedModules, this._workingDir,"model");
+		var appDef = this.buildJson(installedModules, this._workingDir,"app");
+
+		// merge with main model def
+		var mainModelDefModuleId = path.join(this._workingDir, "model.json");
+		var mainModelDef = this.tryGetModule(mainModelDefModuleId);
+		if(mainModelDef)
+			modelDef = this.extend(modelDef, mainModelDef);
+
 		// merge with main app def
-		var mainAppDefModuleId = path.join(this._workingDir, "./app.json");
+		var mainAppDefModuleId = path.join(this._workingDir, "app.json");
 		var mainAppDef = this.tryGetModule(mainAppDefModuleId);
 		if(mainAppDef)
 			appDef = this.extend(appDef, mainAppDef);
 
 		// save the app definition to the data folder
 		var appDefDestPath = path.join(this._workingDir,"/data/app.json");
+		
 		//TODO: create a Promised version of mkdirP
 		gm_fs.mkdirP(path.dirname(appDefDestPath),error=>{
 			if(!error)
@@ -351,8 +363,31 @@ export class Builder {
 				throw error;
 		});
 		
-		console.log(appDef);
-	
+		// save the app definition to the data folder
+		var modelDefDestPath = path.join(this._workingDir,"/data/model.json");
+		
+		gm_fs.mkdirP(path.dirname(modelDefDestPath),error=>{
+			if(!error)
+				this.saveJSON(modelDef,modelDefDestPath)
+				.catch(error=>console.log(error));
+			else
+				throw error;
+		});
+
+		//console.log(modelDef);
+		//console.log(appDef);
+		
+		// validate app def against model definition
+		var sch:tv4.JsonSchema = modelDef;
+		var valid = jsonValidator.validate(mainAppDef, sch, false, true);
+		var errors = jsonValidator.validateMultiple(mainAppDef,sch, false, true);
+		
+		console.log("Validation result %s", valid);		
+		//console.log(jsonValidator.error);				
+		console.log(jsonValidator.missing);
+		console.log(errors);
+		
+		
 		// Load tasks...
 		this.loadBuildTasks(installedModules, this._workingDir);
 	

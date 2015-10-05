@@ -4,7 +4,8 @@
     {
       "id": "contact",
       "name": "Contact",
-      "pluralName": "Contacts"
+      "pluralName": "Contacts",
+      "test":"sd"
     },
     {
       "id": "account",
@@ -12,5 +13,5 @@
       "pluralName": "Accounts"
     }
   ],
-  "property1":{ "value1": "original value"}
+  "configuration":{ }
 }

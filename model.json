@@ -1,55 +1,49 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "id": "http://jsonschema.net",
   "type": "object",
+  "definitions": {
+    "entity":{
+        "id":"#entity",
+        "type": "object",
+        "title": "Defines an entity in the system",
+        "description": "Defines an entity in the system",
+        "name": "Entity",        
+        "pluralName": "Entities",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "pluralName": {
+            "description": "Name to be shown in lists of this entity",
+            "type": "string"
+          },
+          "connection": {
+            "id": "connection",
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string"
+              }
+            }
+          }
+    }
+  }
+  },
   "properties": {
     "name": {
-      "id": "http://jsonschema.net/name",
       "type": "string"
     },
     "entities": {
-      "id": "http://jsonschema.net/entities",
       "type": "array",
-      "items": [
-        {
-          "id": "http://jsonschema.net/entities/0",
-          "type": "object",
-          "properties": {
-            "id": {
-              "id": "http://jsonschema.net/entities/0/id",
-              "type": "string"
-            },
-            "name": {
-              "id": "http://jsonschema.net/entities/0/name",
-              "type": "string"
-            },
-            "pluralName": {
-              "id": "http://jsonschema.net/entities/0/pluralName",
-              "type": "string"
-            }
-          }
-        },
-        {
-          "id": "http://jsonschema.net/entities/1",
-          "type": "object",
-          "properties": {
-            "id": {
-              "id": "http://jsonschema.net/entities/1/id",
-              "type": "string"
-            },
-            "name": {
-              "id": "http://jsonschema.net/entities/1/name",
-              "type": "string"
-            },
-            "pluralName": {
-              "id": "http://jsonschema.net/entities/1/pluralName",
-              "type": "string"
-            }
-          }
-        }
-      ]
-    }
-  },
-  "required": [
-    "name"  ]
+      "items": { "$ref":"#entity"  }
+      },
+     "configuration":{
+       "type":"object"
+     }
+    },
+  "required": ["name"]
 }
