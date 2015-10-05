@@ -4,8 +4,7 @@
     {
       "id": "contact",
       "name": "Contact",
-      "pluralName": "Contacts",
-      "test":"sd"
+      "pluralName": "Contacts"
     },
     {
       "id": "account",

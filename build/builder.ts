@@ -378,34 +378,39 @@ export class Builder {
 		//console.log(appDef);
 		
 		// validate app def against model definition
+		console.log("Validating app def...");
 		var sch:tv4.JsonSchema = modelDef;
-		var valid = jsonValidator.validate(mainAppDef, sch, false, true);
-		var errors = jsonValidator.validateMultiple(mainAppDef,sch, false, true);
+		var errors = jsonValidator.validateMultiple(appDef,sch, false, true);
 		
-		console.log("Validation result %s", valid);		
-		//console.log(jsonValidator.error);				
-		console.log(jsonValidator.missing);
-		console.log(errors);
-		
-		
-		// Load tasks...
-		this.loadBuildTasks(installedModules, this._workingDir);
-	
-		console.log("Tasks:");
-		console.log(this._tasks);
-	
-		// load templates
-		this.getTemplates(installedModules, this._workingDir).then((templates)=>{
-			this._templates = this._templates.concat(templates);
-		}).then(c=>{
+		if(!errors.valid||errors.missing.length>0){
+			console.log("Errors:");
+			console.log(errors);
+		}
+		else{
+			console.log("Valid");
 			
-			console.log("Templates:");
-			console.log(this._templates);
+			// Load tasks...
+			this.loadBuildTasks(installedModules, this._workingDir);
+		
+			console.log("Tasks:");
+			console.log(this._tasks);
+		
+			// load templates
+			this.getTemplates(installedModules, this._workingDir).then((templates)=>{
+				this._templates = this._templates.concat(templates);
+			}).then(c=>{
+				
+				console.log("Templates:");
+				console.log(this._templates);
+				
+				// After the templates finished loading...
+				// begin building the app
+				this.buildApp(appDef);
+			});			
 			
-			// After the templates finished loading...
-			// begin building the app
-			this.buildApp(appDef);
-		});
+		}
+		
+		
 	}
 
 	private buildApp(appDef:any):Promise<any>{

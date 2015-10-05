@@ -3,13 +3,11 @@
   "type": "object",
   "definitions": {
     "entity":{
-        "id":"#entity",
-        "type": "object",
-        "title": "Defines an entity in the system",
-        "description": "Defines an entity in the system",
         "name": "Entity",        
         "pluralName": "Entities",
-        "additionalProperties": false,
+        "description": "Defines an entity in the system",
+        "type": "object",
+        "title": "Defines an entity in the system",
         "properties": {
           "id": {
             "type": "string"
@@ -39,7 +37,7 @@
     },
     "entities": {
       "type": "array",
-      "items": { "$ref":"#entity"  }
+      "items": { "$ref":"#definitions/entity"  }
       },
      "configuration":{
        "type":"object"
