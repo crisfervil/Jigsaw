@@ -15,6 +15,7 @@ export = function(taskManager:TaskManager):void{
     entity.id = "meta_" + (obj.id||propName);
     entity.name = obj.name;
     entity.pluralName = obj.pluralName;
+    entity.connection = {type:"metadata"}
     
     return entity;
   }
