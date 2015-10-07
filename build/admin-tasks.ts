@@ -1,10 +1,15 @@
 /// <reference path="../typings/tsd.d.ts" />
-import {Builder} from "./builder";
+import {TaskManager,ExecutionContext} from "./tasks";
 
-export = function(builder:Builder):void{
-  builder.task("/",function(appDef)
+export = function(taskManager:TaskManager):void{
+  
+  taskManager.add("before-build", function(context:ExecutionContext){
+    
+  });
+  
+  taskManager.add("/", function(context:ExecutionContext)
   {   
-    console.log("building admin site %s...", appDef.name);
+    console.log("building admin site %s...", context.appDef.name);
     // do stuff for building the admin site
     
     // get the model def

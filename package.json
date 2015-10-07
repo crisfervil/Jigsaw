@@ -11,6 +11,7 @@
     "test": "grunt test"
   },
   "dependencies": {
-    "ejs": "^2.3.4"
+    "ejs": "^2.3.4",
+    "tv4": "^1.2.7"
   }
 }

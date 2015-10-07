@@ -2,94 +2,34 @@
 /// <reference path="../typings/custom.d.ts" />
 
 import path = require("path");
-import fs = require("fs");
-import ejs = require("ejs");
-import {gm_fs}  from "../util/fs"
-
-export class Task {
-	id: string;
-	module: string;
-	action: (appDef, element) => any;
-}
-
-export class Template {
-	id: string;
-	path:string;
-	module:string;
-}
+import jsonValidator = require('tv4');
+import {Task,Template,ExecutionContext,TaskManager} from "./tasks";
+import {fs} from "../util/fs";
+import {Obj} from "../util/obj";
 
 export class Builder {
 
-	private _tasks: Array<Task> = [];
-	private _templates: Array<Template> = [];
-	private _workingDir:string;
+	private taskManager:TaskManager = new TaskManager();
 	
-	constructor(workingDir?:string){
-		this._workingDir = workingDir;
-	}
-
-	public task(eventName, action:(appDef, element?) => any): void {
-		// TODO: Check if the task already exist
-		var newTask = new Task();
-		newTask.id=eventName;
-		newTask.action=action;
-		this._tasks.push(newTask);
-	}
-
-	public getTasksById(id: string): Array<Task> {
-		var task: Array<Task> = [];
-
-		for (var index = 0; index < this._tasks.length; index++) {
-			var current = this._tasks[index];
-			if (current.id == id) {
-				task.push(current);
-			}
-		}
-		return task;
-	}
-
-	public runTask(taskName: string, appDef, appElement) {
-		var tasks = this.getTasksById(taskName);
-		return this.runAll(tasks,appDef,appElement);
-	}
-
-	private runAll(tasks: Task[], appDef, appElement) {
-		var promises : Array<Promise<any>> = [];
-		for (var i = 0; i < tasks.length; i++) {
-			var task = tasks[i];
-			var p = this.run(task, appDef, appElement);
-			promises.push(p);
-		}
-		return Promise.all(promises);
-	}
-
-	private run(task: Task, appDef, appElement) {
-		return new Promise((resolve, reject)=>{
-			console.log("Running task %s...", task.id);
-			try {
-				var retVal = task.action.call(this, appDef, appElement);
-				if(retVal&&retVal instanceof Promise){
-						var rv:Promise<any> = retVal;
-						rv
-						.then(x=>resolve(rv))
-						.catch(err=>{
-							// Error executing the task
-							console.log("Error executing task %s: %s", task.id, err);
-							reject(err);});
-				}
-				else{
-					resolve();
-					console.log("done!");
-				}
-			}
-			catch (err){
-				// Error executing the task
-				console.log("Error executing task %s: %s", task.id, err);
-				reject(err);				
-			}
-		});
+	constructor(private workingDir:string){
 	}
 	
+	/**
+	 * Searches for json files in installed modules, merge found objects and returns the result
+	 */
+	private buildJson(installedModules:Array<string>, workingDir:string, fileName:string){
+		var jsonObj:any={};
+		for (var i = 0; i < installedModules.length; i++) {
+			var installedModule = installedModules[i];
+			var jsonFileId = path.join(workingDir, "node_modules", installedModule, fileName);
+			var moduleJsonObj = this.tryGetModule(jsonFileId);
+			if(moduleJsonObj) {
+				jsonObj = Obj.extend(jsonObj, moduleJsonObj);
+			}
+		}
+		return jsonObj;
+	}
+		
 	private getRoot(m:NodeModule):NodeModule{
 		var root = m;
 		while(root.parent) root = root.parent;
@@ -104,133 +44,25 @@ export class Builder {
 		
 		return result;
 	}
-	
-	private extend(object1, object2):any{
 
-		if (!object1 || (object2 && typeof object2 != "object")){
-			// merge non object values
-			object1=object2;
-		}
-		else
-		{
-			// merge objects
-			for(var propName in object2){
-				var obj1PropValue = object1[propName];
-				var obj2PropValue = object2[propName];
-				if(obj2PropValue) {
-					if(!obj1PropValue)
-					{
-						// the property doesn't exist in obj1
-						object1[propName] = obj2PropValue;
-					}
-					else {
-						if (typeof obj2PropValue == "object"){
-							if(typeof obj1PropValue != "object"){
-								//Trying to merge different types of objects
-								object1[propName] = obj2PropValue
-							}
-							else{
-								if(Array.isArray(obj2PropValue))
-								{
-									if(!Array.isArray(obj1PropValue))
-									{
-										//Trying to merge different types of objects
-										object1[propName] = obj2PropValue
-									}
-									else {
-										for (var i = 0; i < obj2PropValue.length; i++) {
-											obj1PropValue.push(obj2PropValue[i]);
-										}
-									}
-								}
-								else{
-									// merge two non array obects
-									object1[propName] = this.extend(obj1PropValue, obj2PropValue);
-								}							
-							}
-						}
-						else {
-							object1[propName] = obj2PropValue;
-						}
-					}
-				}
-			}
-		}
-		return object1;
-	}
-
-	private fs_writeFile(obj,path:string){
-		return new Promise((resolve, reject)=>{
-			fs.writeFile(path, obj, error=> {if(error)reject(error); else resolve();});	
-		});
-	}
-
-	private saveJSON(obj, path:string){
-		var objStr = JSON.stringify(obj, null, 4);
-		return this.fs_writeFile(objStr,path);
-	}
-
-	private buildAppDef(installedModules:Array<string>, workingDir:string){
-		var appDef={};
-		for (var i = 0; i < installedModules.length; i++) {
-			var installedModule = installedModules[i];
-			var appDefModuleId = path.join(workingDir, "node_modules", installedModule, "app");
-			var moduleAppDef = this.tryGetModule(appDefModuleId);
-			if(moduleAppDef) {
-				appDef = this.extend(appDef, moduleAppDef);
-			}
-		}
-		return appDef;
-	}
-	
 	private loadBuildTasks(installedModules:Array<string>, workingDir:string){
 		for (var i = 0; i < installedModules.length; i++) {
 			var installedModule = installedModules[i];
 			var buildTaskModuleId = path.join(workingDir, "node_modules", installedModule, "build/buildTasks");
 			var buildTaskModule = this.tryGetModule(buildTaskModuleId);
 			if(buildTaskModule) {
-				buildTaskModule(this);
+				buildTaskModule(this.taskManager);
 			}
 		}
-	}
-	
-	private fs_exists(path:string):Promise<boolean>{
-		return new Promise<boolean>(resolve=>{
-			fs.exists(path, x=>resolve(x))
-		});
-	}
-	
-	private fs_readdir(path:string){
-		return new Promise<string[]>((resolve,reject)=>{
-			fs.readdir(path,(err,files)=>{
-				if(err){
-					reject(err);
-				}else{
-					resolve(files);
-				}
-			});
-		});
-	}
-
-	private fs_readFile(path:string){
-		return new Promise<Buffer>((resolve,reject)=>{
-			fs.readFile(path,(err,data)=>{
-				if(err){
-					reject(err);
-				}else{
-					resolve(data);
-				}
-			});
-		});
 	}
 
 	private getTemplatesFromModule(moduleName:string, workingDir:string){
 		return new Promise<Template[]>(resolve=>{
 			var dirPath = path.join(workingDir, "node_modules", moduleName, "templates");
 			var templates = new Array<Template>();
-			this.fs_exists(dirPath).then(exists=>{
+			fs.exists(dirPath).then(exists=>{
 				if(exists){
-					this.fs_readdir(dirPath).then(files=>{
+					fs.readdir(dirPath).then(files=>{
 						for (var i = 0; i < files.length; i++) {
 							var templateFile = files[i];
 							var template = new Template();
@@ -273,156 +105,177 @@ export class Builder {
 			resolve(templates);	
 		}));
 	}	
-
-	private getTemplate(id:string):Template{
-		var template:Template=null;
-		for (var i = 0; i < this._templates.length; i++) {
-			var currentTemplate = this._templates[i];
-			if(currentTemplate.id==id){
-				template=currentTemplate;
-				break;
-			}
-		}
-		return template;
-	}
 	
-	private getTemplateContent(template:Template, workingDir:string){
-		return new Promise<string>((resolve,reject)=>{
-			var templatePath = path.join(workingDir,"node_modules", template.module,template.path);
-			this.fs_readFile(templatePath).then(data=>{
-				resolve(data.toString());
-			})
-			.catch(error=>{reject(error);});
-		});
-	}
-
-	public runTemplate(templateId:string,appDef, item, destPath?:string){
-		return new Promise((resolve, reject)=>{
-			var template = this.getTemplate(templateId);
-			this.getTemplateContent(template, this._workingDir)
-			.then(content=>{
-				
-				var resultOutputPath = null;
-				var templateParams = {item:item, appDef:appDef, output:(x)=>resultOutputPath=x};
-				
-				// render the template using ejs
-				// TODO: Allow other template engines
-				var result = ejs.render(content,templateParams);
-				
-				if(resultOutputPath) destPath = resultOutputPath;
-				if(!path.isAbsolute(destPath)){
-					// TODO: Change the working dir for the output dir
-					destPath = path.join(this._workingDir, destPath);
-				} 
-				gm_fs.mkdirP(path.dirname(destPath), error=>{
-					if(!error)
-						this.fs_writeFile(result,destPath)
-						.then(resolve)
-						.catch(error=>reject(error));
-					else
-						reject(error);
-				});
-			})
-			.catch(error=>reject(error));
-		});
-	}
-	
-	public build(): void {
-		
-		var appPkgId = path.join(this._workingDir,"./package");
-		var appPkg = require(appPkgId);
-		var installedModules = appPkg.config.greenmouse.packages;
-		
-		var appDef = this.buildAppDef(installedModules, this._workingDir);
-		
-		// merge with main app def
-		var mainAppDefModuleId = path.join(this._workingDir, "./app.json");
-		var mainAppDef = this.tryGetModule(mainAppDefModuleId);
-		if(mainAppDef)
-			appDef = this.extend(appDef, mainAppDef);
-
-		// save the app definition to the data folder
-		var appDefDestPath = path.join(this._workingDir,"/data/app.json");
-		//TODO: create a Promised version of mkdirP
-		gm_fs.mkdirP(path.dirname(appDefDestPath),error=>{
-			if(!error)
-				this.saveJSON(appDef,appDefDestPath);
-			else
-				throw error;
-		});
-		
-		console.log(appDef);
-	
-		// Load tasks...
-		this.loadBuildTasks(installedModules, this._workingDir);
-	
-		console.log("Tasks:");
-		console.log(this._tasks);
-	
-		// load templates
-		this.getTemplates(installedModules, this._workingDir).then((templates)=>{
-			this._templates = this._templates.concat(templates);
-		}).then(c=>{
-			
-			console.log("Templates:");
-			console.log(this._templates);
-			
-			// After the templates finished loading...
-			// begin building the app
-			this.buildApp(appDef);
-		});
-	}
-
-	private buildApp(appDef:any):Promise<any>{
-		return this.buildItem(appDef, "/", appDef);		
-	}
-
-	private buildItem(appDef, currentPath: string, currentAppElement):Promise<any> {
-		// Run the task
-		var tasks = this.getTasksById(currentPath);
+	/**
+	* Builds the current object and returns a Promise
+	*/
+	private buildObject(context:ExecutionContext):Promise<ExecutionContext> {
+		// Run the task with the specified item path
+		var tasks = this.taskManager.get(context.currentItemPath);
 		if (tasks) {
-			return this.runAll(tasks, appDef, currentAppElement)
+			return this.taskManager.runAll(tasks, context)
 			.then(
-				x=>this.buildItemChildren(appDef, currentPath, currentAppElement));
+				x=>this.buildProperty(context));
 		}
 		else {
-			return this.buildItemChildren(appDef, currentPath, currentAppElement);	
+			// There aren't any tasks for defined fot the specified item
+			// so, we run the tasks for the inner objects
+			return this.buildProperty(context);	
 		}
 	}
+
 	
-	private buildItemChildren(appDef, currentPath: string, currentAppElement):Promise<any>{
-		// Iterate trhough object properties (app def elements)
-		var objProps = Object.keys(currentAppElement);
-		return this.buildItemProperty(appDef,currentPath,currentAppElement,objProps,0);
-	}
+	/**
+	 * Builds every property in the current Item, and returns a Promise
+	 */
+	private buildProperty(context:ExecutionContext, properties?:Array<string>,currentPropertyIndex?:number):Promise<ExecutionContext>{
+		
+		// optional parameters
+		if(!properties && typeof context.currentItem == "object") properties = Object.keys(context.currentItem);
+		if(!currentPropertyIndex) currentPropertyIndex = 0;
 	
-	private buildItemProperty(appDef, currentPath: string, object, propsArray:Array<string>,currentPropIndex:number):Promise<any>{
-		if(currentPropIndex<propsArray.length){
-			var propName = propsArray[currentPropIndex];
-			var propValue = object[propName];
+		if(properties && currentPropertyIndex<properties.length){
+			var propName = properties[currentPropertyIndex];
+			var propValue = context.currentItem[propName];
 			if (propValue != null && typeof propValue == "object") {
-				var currentPropPath = path.join(currentPath, propName).replace("\\", "/");
+				var currentPropPath = path.join(context.currentItemPath, propName).replace("\\", "/");
 				if (Array.isArray(propValue)) {
 					var arrayProp:Array<any> = propValue;
-					return this.buildItemArray(appDef, currentPropPath, arrayProp, 0)
-					.then(x=>this.buildItemProperty(appDef,currentPath, object, propsArray, currentPropIndex+1));
+					// Copy the context, so later calls doesn't change it
+					var context2 = Obj.clone(context);
+					context2.currentItemPath = currentPropPath;
+					// if the property is an array, build it as an array
+					return this.buildArray(context2, arrayProp, 0)
+					// then, build the next property
+					.then(
+						x=>this.buildProperty(context, properties, currentPropertyIndex+1));
 				}
-				else if (!(propValue instanceof Date)) {
-					return this.buildItem(appDef, currentPropPath, propValue)
-					.then(x=>this.buildItemProperty(appDef,currentPath, object, propsArray, currentPropIndex+1));
+				else if (!(propValue instanceof Date)) { 
+					// the property is a regular object
+					// Copy the context, so later calls doesn't change it
+					var context2 = Obj.clone(context);
+					context2.currentItemPath = currentPropPath;
+					context2.currentItem = propValue;
+					// Build it
+					return this.buildObject(context2)
+					// And then, build the next property
+					.then(x=>
+						this.buildProperty(context, properties, currentPropertyIndex+1));
 				}
 			}
 			else
 			{
-				return this.buildItemProperty(appDef,currentPath, object, propsArray, currentPropIndex+1)
+				// the property value type is a native type. Doesn't require to be built
+				// Build the next property
+				return this.buildProperty(context, properties, currentPropertyIndex+1)
 			}
 		}
+		// TODO: Is this line required?
+		return Promise.resolve();
 	}
 	
-	private buildItemArray(appDef, currentPath: string, array:Array<any>,currentIndex:number):Promise<any>{
+	/**
+	*	Builds every element in the array and returns a Promise
+	*/
+	private buildArray(context:ExecutionContext, array:Array<any>,currentIndex:number):Promise<ExecutionContext>{
 		if(currentIndex<array.length) {
-			return this.buildItem(appDef, currentPath, array[currentIndex])
-					.then(x=>this.buildItemArray(appDef, currentPath, array, currentIndex+1));
+			// The current item changes in every iteration
+			// the current path remains the same. All the elements in the array share the same path
+			context.currentItem = array[currentIndex];
+			return this.buildObject(context)
+				.then(
+					x=>this.buildArray(context, array, currentIndex+1));
+		}
+		// TODO: Is this line required?
+		return Promise.resolve();
+	}
+	
+	public build(): void {
+		
+		var appPkgId = path.join(this.workingDir,"package.json");
+		var appPkg = require(appPkgId);
+		var installedModules = appPkg.config.greenmouse.packages;
+		
+		var modelDef = this.buildJson(installedModules, this.workingDir,"model");
+		var appDef = this.buildJson(installedModules, this.workingDir,"app");
+
+		// merge with main model def
+		var mainModelDefModuleId = path.join(this.workingDir, "model.json");
+		var mainModelDef = this.tryGetModule(mainModelDefModuleId);
+		if(mainModelDef)
+			modelDef = Obj.extend(modelDef, mainModelDef);
+
+		// merge with main app def
+		var mainAppDefModuleId = path.join(this.workingDir, "app.json");
+		var mainAppDef = this.tryGetModule(mainAppDefModuleId);
+		if(mainAppDef)
+			appDef = Obj.extend(appDef, mainAppDef);
+
+		// save the app definition to the data folder
+		var appDefDestPath = path.join(this.workingDir,"/data/app.json");
+		
+		//TODO: create a Promised version of mkdirP
+		fs.mkdirP(path.dirname(appDefDestPath),error=>{
+			if(!error)
+				fs.saveJSON(appDef,appDefDestPath);
+			else
+				throw error;
+		});
+		
+		// save the app definition to the data folder
+		var modelDefDestPath = path.join(this.workingDir,"/data/model.json");
+		
+		fs.mkdirP(path.dirname(modelDefDestPath),error=>{
+			if(!error)
+				fs.saveJSON(modelDef,modelDefDestPath)
+				.catch(error=>console.log(error));
+			else
+				throw error;
+		});
+
+		//console.log(modelDef);
+		//console.log(appDef);
+		
+		// validate app def against model definition
+		console.log("Validating app def...");
+		var sch:tv4.JsonSchema = modelDef;
+		var errors = jsonValidator.validateMultiple(appDef,sch, false, true);
+		
+		if(!errors.valid||errors.missing.length>0){
+			console.log("Errors:");
+			console.log(errors);
+		}
+		else{
+			console.log("Valid");
+			
+			// Load tasks...
+			this.loadBuildTasks(installedModules, this.workingDir);
+		
+			console.log("Tasks:");
+			console.log(this.taskManager.tasks());
+		
+			// load templates
+			this.getTemplates(installedModules, this.workingDir).then((templates)=>{
+				templates.forEach(t=>this.taskManager.addTemplate(t))
+			}).then(c=>{
+				
+				console.log("Templates:");
+				console.log(this.taskManager.templates());
+				
+				// After the templates finished loading...
+				// begin building the app
+				var context: ExecutionContext = { appDef:appDef, currentItem:appDef, currentItemPath:"/", 
+													modelDef:modelDef, workingDir:this.workingDir};
+											
+				// Run the before build tasks
+				this.taskManager.run("before-build", context)
+				// build the app
+				.then(x=>this.buildObject(context))
+				// Run after build tasks
+				.then(x=>this.taskManager.run("after-build",context))
+				.catch(console.log);
+				
+			});			
 		}
 	}
 }

@@ -1,8 +1,10 @@
 /// <reference path="../typings/tsd.d.ts" />
-import {Builder} from "./builder";
+
+import {TaskManager} from "./tasks";
 import webbAppTasks = require("./web-app-tasks");
 import adminTasks = require("./admin-tasks");
-export = function(builder:Builder):void{
-  webbAppTasks(builder);
-  adminTasks(builder);
+
+export = function(taskManager:TaskManager):void{
+  webbAppTasks(taskManager);
+  adminTasks(taskManager);
 };

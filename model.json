@@ -1,5 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
+<<<<<<< HEAD
     "id":"http://json-schema.org",
 
   "definitions": {
@@ -83,4 +84,50 @@
   "required": [
     "name","entities"
   ]
+=======
+  "type": "object",
+  "definitions": {
+    "entity":{
+        "name": "Entity",        
+        "pluralName": "Entities",
+        "description": "Defines an entity in the system",
+        "type": "object",
+        "title": "Defines an entity in the system",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "pluralName": {
+            "description": "Name to be shown in lists of this entity",
+            "type": "string"
+          },
+          "connection": {
+            "id": "connection",
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string"
+              }
+            }
+          }
+    }
+  }
+  },
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "entities": {
+      "type": "array",
+      "items": { "$ref":"#definitions/entity"  }
+      },
+     "configuration":{
+       "type":"object"
+     }
+    },
+  "required": ["name"]
+>>>>>>> origin/master
 }
