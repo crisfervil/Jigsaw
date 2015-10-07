@@ -190,6 +190,20 @@ export class Builder {
 		return Promise.resolve();
 	}
 	
+	private saveAppDef(context:ExecutionContext){
+		// save the app definition to the data folder
+		var destPath = path.join(context.workingDir,"/data/app.json");
+		//console.log(context.appDef);
+		return fs.saveJSON(context.appDef,destPath)
+	}
+
+	private saveModelDef(context:ExecutionContext){
+		// save the app model to the data folder
+		var destPath = path.join(context.workingDir,"/data/model.json");
+		//console.log(context.modelDef);
+		return fs.saveJSON(context.modelDef,destPath)
+	}
+	
 	public build(): void {
 		
 		var appPkgId = path.join(this.workingDir,"package.json");
@@ -211,31 +225,6 @@ export class Builder {
 		if(mainAppDef)
 			appDef = Obj.extend(appDef, mainAppDef);
 
-		// save the app definition to the data folder
-		var appDefDestPath = path.join(this.workingDir,"/data/app.json");
-		
-		//TODO: create a Promised version of mkdirP
-		fs.mkdirP(path.dirname(appDefDestPath),error=>{
-			if(!error)
-				fs.saveJSON(appDef,appDefDestPath);
-			else
-				throw error;
-		});
-		
-		// save the app definition to the data folder
-		var modelDefDestPath = path.join(this.workingDir,"/data/model.json");
-		
-		fs.mkdirP(path.dirname(modelDefDestPath),error=>{
-			if(!error)
-				fs.saveJSON(modelDef,modelDefDestPath)
-				.catch(error=>console.log(error));
-			else
-				throw error;
-		});
-
-		//console.log(modelDef);
-		//console.log(appDef);
-		
 		// validate app def against model definition
 		console.log("Validating app def...");
 		var sch:tv4.JsonSchema = modelDef;
@@ -272,9 +261,10 @@ export class Builder {
 				// build the app
 				.then(x=>this.buildObject(context))
 				// Run after build tasks
-				.then(x=>this.taskManager.run("after-build",context))
+				.then(()=>this.taskManager.run("after-build",context))
+				.then(()=>this.saveAppDef(context))
+				.then(()=>this.saveModelDef(context))
 				.catch(console.log);
-				
 			});			
 		}
 	}

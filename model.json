@@ -1,120 +1,35 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-<<<<<<< HEAD
-    "id":"http://json-schema.org",
-
+  "type": "object",
   "definitions": {
     "entity": {
-      "id": "entity",
+      "name": "Entity",
+      "pluralName": "Entities",
+      "description": "Defines an entity in the system",
       "type": "object",
-      "title": "entity",
-      "description": "Holds information about an entity in the system",
-      "name": "entity",
+      "title": "Defines an entity in the system",
       "properties": {
         "id": {
-          "id": "id",
-          "type": "string",
-          "title": "Unique Id to reference an entity in the system",
-          "description": "Unique Id to reference an entity in the system",
-          "name": "Id"
+          "type": "string"
         },
         "name": {
-          "id": "name",
-          "type": "string",
-          "title": "User friendly name of the entity",
-          "description": "User friendly name of the entity",
-          "name": "Name"
+          "type": "string"
         },
         "pluralName": {
-          "id": "pluralName",
-          "type": "string",
-          "title": "Plural name of the entity",
-          "description": "Plural name of the entity",
-          "name": "Plural Name"
-        }
-      }
-    }
-  },
-  "type": "object",
-  "title": "Application",
-  "description": "Root Object of the Application",
-  "name": "Application",
-  "properties": {
-    "name": {
-      "id": "name",
-      "type": "string",
-      "title": "Name schema.",
-      "description": "An explanation about the puropose of this instance described by this schema.",
-      "name": "name"
-    },
-    "entities": {
-      "id": "entities",
-      "type": "array",
-      "title": "Entities schema.",
-      "description": "An explanation about the puropose of this instance described by this schema.",
-      "name": "entities",
-      "items": {
-        "$ref": "http://json-schema.org#/definitions/entity"
-      }
-    },
-    "property1": {
-      "id": "property1",
-      "type": "object",
-      "title": "Property1 schema.",
-      "description": "An explanation about the puropose of this instance described by this schema.",
-      "name": "property1",
-      "properties": {
-        "value1": {
-          "id": "property1/value1",
-          "type": "string",
-          "title": "Value1 schema.",
-          "description": "An explanation about the puropose of this instance described by this schema.",
-          "name": "value1"
-        }
-      }
-    },
-    "property2": {
-      "id": "property2",
-      "type": "string",
-      "title": "Property2 schema.",
-      "description": "An explanation about the puropose of this instance described by this schema.",
-      "name": "property2"
-    }
-  },
-  "required": [
-    "name","entities"
-  ]
-=======
-  "type": "object",
-  "definitions": {
-    "entity":{
-        "name": "Entity",        
-        "pluralName": "Entities",
-        "description": "Defines an entity in the system",
-        "type": "object",
-        "title": "Defines an entity in the system",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "pluralName": {
-            "description": "Name to be shown in lists of this entity",
-            "type": "string"
-          },
-          "connection": {
-            "id": "connection",
-            "type": "object",
-            "properties": {
-              "type": {
-                "type": "string"
-              }
+          "description": "Name to be shown in lists of this entity",
+          "type": "string"
+        },
+        "connection": {
+          "id": "connection",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string"
             }
           }
+        }
+      }
     }
-  }
   },
   "properties": {
     "name": {
@@ -122,12 +37,13 @@
     },
     "entities": {
       "type": "array",
-      "items": { "$ref":"#definitions/entity"  }
-      },
-     "configuration":{
-       "type":"object"
-     }
+      "items": {
+        "$ref": "#definitions/entity"
+      }
     },
+    "configuration": {
+      "type": "object"
+    }
+  },
   "required": ["name"]
->>>>>>> origin/master
 }

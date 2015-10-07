@@ -43,11 +43,24 @@ export class fs {
         });
     }
 
-    public static saveJSON(obj, path: string) {
-        var objStr = JSON.stringify(obj, null, 4);
-        return this.writeFile(objStr, path);
+    /**
+     * Saves the specified object as a json file in the specified path. 
+     * Creates the directory if doesn't exist
+     */
+    public static saveJSON(obj, destPath: string) {
+        return new Promise((resolve,reject)=>{
+            var objStr = JSON.stringify(obj, null, 4);
+            var dirPath = path.dirname(destPath);
+            fs.mkdirP(dirPath,error=>{
+                if(!error)
+                    fs.writeFile(objStr, destPath).then(resolve);
+                else
+                    reject(error);
+            });
+        });
     }
 
+    //TODO: Improve this. Return a Promise
     public static mkdirP(p, opts, f?, made?) {
         if (typeof opts === 'function') {
             f = opts;
