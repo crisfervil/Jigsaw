@@ -67,17 +67,28 @@ export class TaskManager{
 		return this.runAll(tasks,context);
 	}
 	
+	public runAll(tasks: Task[], context:ExecutionContext) {
+		var promises : Array<Promise<ExecutionContext>> = [];
+		for (var i = 0; i < tasks.length; i++) {
+			var task = tasks[i];
+			var p = this._run(task, context);
+			promises.push(p);
+		}
+		return Promise.all(promises).then<ExecutionContext>(x=>context);
+	}	
+	
 	private _run(task: Task, context:ExecutionContext) {
-		return new Promise((resolve, reject)=>{
+		return new Promise<ExecutionContext>((resolve, reject)=>{
 			console.log("Running task %s...", task.id);
 			try {
 				var retVal = task.action.call(this, context);
 				if(retVal&&retVal instanceof Promise){
 					// If the task has returned a Promise, means that is an asyn task
 					// So, wait until is resolved
-					var rv:Promise<any> = retVal;
-					rv
-					.then(x=>resolve(rv))
+					var returnedPromise:Promise<any> = retVal;
+					returnedPromise
+					//TODO: In the followinf line should I return context or retVal?
+					.then(retVal=>resolve(context))
 					.catch(err=>{
 						// Error executing the task
 						console.log("Error executing task %s: %s", task.id, err);
@@ -86,7 +97,7 @@ export class TaskManager{
 				else{
 					// If the task returns nothins or any other value
 					// means that is a sync task, so we can resolve it inmediately
-					resolve();
+					resolve(context);
 					console.log("done!");
 				}
 			}
@@ -96,16 +107,6 @@ export class TaskManager{
 				reject(err);				
 			}
 		});
-	}
-	
-	public runAll(tasks: Task[], context:ExecutionContext) {
-		var promises : Array<Promise<any>> = [];
-		for (var i = 0; i < tasks.length; i++) {
-			var task = tasks[i];
-			var p = this._run(task, context);
-			promises.push(p);
-		}
-		return Promise.all(promises);
 	}
 	
 	public getTemplate(id:string):Template{

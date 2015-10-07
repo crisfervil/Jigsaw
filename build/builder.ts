@@ -109,7 +109,7 @@ export class Builder {
 	/**
 	* Builds the current object and returns a Promise
 	*/
-	private buildObject(context:ExecutionContext):Promise<{}> {
+	private buildObject(context:ExecutionContext):Promise<ExecutionContext> {
 		// Run the task with the specified item path
 		var tasks = this.taskManager.get(context.currentItemPath);
 		if (tasks) {
@@ -128,13 +128,13 @@ export class Builder {
 	/**
 	 * Builds every property in the current Item, and returns a Promise
 	 */
-	private buildProperty(context:ExecutionContext, properties?:Array<string>,currentPropertyIndex?:number):Promise<{}>{
+	private buildProperty(context:ExecutionContext, properties?:Array<string>,currentPropertyIndex?:number):Promise<ExecutionContext>{
 		
 		// optional parameters
-		if(!properties) properties = Object.keys(context.currentItem);
+		if(!properties && typeof context.currentItem == "object") properties = Object.keys(context.currentItem);
 		if(!currentPropertyIndex) currentPropertyIndex = 0;
-				
-		if(currentPropertyIndex<properties.length){
+	
+		if(properties && currentPropertyIndex<properties.length){
 			var propName = properties[currentPropertyIndex];
 			var propValue = context.currentItem[propName];
 			if (propValue != null && typeof propValue == "object") {
@@ -170,13 +170,14 @@ export class Builder {
 				return this.buildProperty(context, properties, currentPropertyIndex+1)
 			}
 		}
+		// TODO: Is this line required?
 		return Promise.resolve();
 	}
 	
 	/**
 	*	Builds every element in the array and returns a Promise
 	*/
-	private buildArray(context:ExecutionContext, array:Array<any>,currentIndex:number):Promise<{}>{
+	private buildArray(context:ExecutionContext, array:Array<any>,currentIndex:number):Promise<ExecutionContext>{
 		if(currentIndex<array.length) {
 			// The current item changes in every iteration
 			// the current path remains the same. All the elements in the array share the same path
@@ -185,6 +186,7 @@ export class Builder {
 				.then(
 					x=>this.buildArray(context, array, currentIndex+1));
 		}
+		// TODO: Is this line required?
 		return Promise.resolve();
 	}
 	
@@ -263,12 +265,17 @@ export class Builder {
 				// After the templates finished loading...
 				// begin building the app
 				var context: ExecutionContext = { appDef:appDef, currentItem:appDef, currentItemPath:"/", 
-											modelDef:modelDef, workingDir:this.workingDir};
-				this.buildObject(context);
+													modelDef:modelDef, workingDir:this.workingDir};
+											
+				// Run the before build tasks
+				this.taskManager.run("before-build", context)
+				// build the app
+				.then(x=>this.buildObject(context))
+				// Run after build tasks
+				.then(x=>this.taskManager.run("after-build",context))
+				.catch(console.log);
+				
 			});			
-			
 		}
 	}
-	
-	
 }
