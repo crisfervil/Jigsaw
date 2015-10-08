@@ -186,6 +186,10 @@ export class Builder {
 		}
 	}
 	
+	private handleError(error){
+		console.log(error);
+	}
+	
 	public build(): void {
 		
 		var appPkgId = path.join(this.workingDir,"package.json");
@@ -219,12 +223,11 @@ export class Builder {
 		
 			// load templates
 			this.templateManager.getTemplates(installedModules, this.workingDir)
-			.then((templates)=>{
-				templates.forEach(t=>this.templateManager.addTemplate(t))})
+			.then(x=>this.templateManager.addTemplates(x))
 			.then(()=>{
 				
-				//console.log("Templates:");
-				//console.log(this.templateManager.templates());
+				console.log("Templates:");
+				console.log(this.templateManager.templates());
 				
 				// After the templates finished loading...
 				// begin building the app
@@ -240,8 +243,8 @@ export class Builder {
 				.then(()=>this.validateAppDef(context.appDef, context.modelDef))
 				.then(()=>this.saveAppDef(context))
 				.then(()=>this.saveModelDef(context))
-				.catch(console.log);
-			});			
+				.catch(this.handleError);
+			}).catch(this.handleError);			
 		}
 	}
 }
