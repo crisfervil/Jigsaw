@@ -3,13 +3,16 @@
 
 import path = require("path");
 import jsonValidator = require('tv4');
-import {Task,Template,ExecutionContext,TaskManager} from "./tasks";
+import {Task,TaskExecutionContext,TaskManager} from "./tasks";
+import {Template,TemplateExecutionContext,TemplateManager} from "./templates";
+
 import {fs} from "../util/fs";
 import {Obj} from "../util/obj";
 
 export class Builder {
 
 	private taskManager:TaskManager = new TaskManager();
+	private templateManager:TemplateManager = new TemplateManager();
 	
 	constructor(private workingDir:string){
 	}
@@ -51,65 +54,15 @@ export class Builder {
 			var buildTaskModuleId = path.join(workingDir, "node_modules", installedModule, "build/buildTasks");
 			var buildTaskModule = this.tryGetModule(buildTaskModuleId);
 			if(buildTaskModule) {
-				buildTaskModule(this.taskManager);
+				buildTaskModule(this.taskManager, this.templateManager);
 			}
 		}
 	}
-
-	private getTemplatesFromModule(moduleName:string, workingDir:string){
-		return new Promise<Template[]>(resolve=>{
-			var dirPath = path.join(workingDir, "node_modules", moduleName, "templates");
-			var templates = new Array<Template>();
-			fs.exists(dirPath).then(exists=>{
-				if(exists){
-					fs.readdir(dirPath).then(files=>{
-						for (var i = 0; i < files.length; i++) {
-							var templateFile = files[i];
-							var template = new Template();
-							
-							var templateExt = path.extname(templateFile);
-							if(templateExt){
-								template.id = templateFile.substr(0, templateFile.length - templateExt.length);
-							}
-							else{
-								template.id = templateFile;	
-							}
-							
-							template.path = path.relative(path.join(workingDir, "node_modules", moduleName), 
-															path.join(dirPath, templateFile));
-							template.module = moduleName;
-							templates.push(template);
-						}
-						resolve(templates);
-					})
-				}
-				else{
-					resolve([]);
-				}
-			})
-		});
-	}
-	
-	private getTemplates(installedModules:Array<string>, workingDir:string){
-		var promises = new Array<Promise<Template[]>>();
-		// TODO: Make it recursive
-		for (var i = 0; i < installedModules.length; i++) {
-			var moduleName = installedModules[i];
-			promises.push(this.getTemplatesFromModule(moduleName,workingDir));
-		}
-		return new Promise<Template[]>(resolve=>Promise.all(promises).then(allTemplates=>{
-			var templates = new Array<Template>();
-			for (var i = 0; i < allTemplates.length; i++) {
-				templates = templates.concat(allTemplates[i]);
-			}
-			resolve(templates);	
-		}));
-	}	
 	
 	/**
 	* Builds the current object and returns a Promise
 	*/
-	private buildObject(context:ExecutionContext):Promise<ExecutionContext> {
+	private buildObject(context:TaskExecutionContext):Promise<TaskExecutionContext> {
 		// Run the task with the specified item path
 		var tasks = this.taskManager.get(context.currentItemPath);
 		if (tasks) {
@@ -128,7 +81,7 @@ export class Builder {
 	/**
 	 * Builds every property in the current Item, and returns a Promise
 	 */
-	private buildProperty(context:ExecutionContext, properties?:Array<string>,currentPropertyIndex?:number):Promise<ExecutionContext>{
+	private buildProperty(context:TaskExecutionContext, properties?:Array<string>,currentPropertyIndex?:number):Promise<TaskExecutionContext>{
 		
 		// optional parameters
 		if(!properties && typeof context.currentItem == "object") properties = Object.keys(context.currentItem);
@@ -177,7 +130,7 @@ export class Builder {
 	/**
 	*	Builds every element in the array and returns a Promise
 	*/
-	private buildArray(context:ExecutionContext, array:Array<any>,currentIndex:number):Promise<ExecutionContext>{
+	private buildArray(context:TaskExecutionContext, array:Array<any>,currentIndex:number):Promise<TaskExecutionContext>{
 		if(currentIndex<array.length) {
 			// The current item changes in every iteration
 			// the current path remains the same. All the elements in the array share the same path
@@ -190,18 +143,47 @@ export class Builder {
 		return Promise.resolve();
 	}
 	
-	private saveAppDef(context:ExecutionContext){
+	private saveAppDef(context:TaskExecutionContext){
 		// save the app definition to the data folder
 		var destPath = path.join(context.workingDir,"/data/app.json");
 		//console.log(context.appDef);
 		return fs.saveJSON(context.appDef,destPath)
 	}
 
-	private saveModelDef(context:ExecutionContext){
+	private saveModelDef(context:TaskExecutionContext){
 		// save the app model to the data folder
 		var destPath = path.join(context.workingDir,"/data/model.json");
 		//console.log(context.modelDef);
 		return fs.saveJSON(context.modelDef,destPath)
+	}
+	
+	/**
+	 * Validates app definition against the model definition
+	 */
+	private isAppDefValid(appDef, modelDef) {
+	
+		var isValid=false;	
+		var sch:tv4.JsonSchema = modelDef;
+		var validator = jsonValidator.freshApi();
+		var errors = validator.validateMultiple(appDef,sch, false, true);
+		
+		if(!errors.valid||errors.missing.length>0){
+			console.log("Error: Application definition validation KO");
+			console.log(errors);
+		}
+		else{
+			console.log("Application definition OK");
+			isValid = true;
+		}
+		
+		return isValid;
+	}
+	
+	private validateAppDef(appDef, modelDef){
+		var isValid = this.isAppDefValid(appDef, modelDef);
+		if(!isValid){
+			throw "Application definition is not valid";
+		}
 	}
 	
 	public build(): void {
@@ -226,35 +208,28 @@ export class Builder {
 			appDef = Obj.extend(appDef, mainAppDef);
 
 		// validate app def against model definition
-		console.log("Validating app def...");
-		var sch:tv4.JsonSchema = modelDef;
-		var errors = jsonValidator.validateMultiple(appDef,sch, false, true);
-		
-		if(!errors.valid||errors.missing.length>0){
-			console.log("Errors:");
-			console.log(errors);
-		}
-		else{
-			console.log("Valid");
+		var appDefValid = this.isAppDefValid(appDef,modelDef);
+		if(appDefValid){
 			
 			// Load tasks...
 			this.loadBuildTasks(installedModules, this.workingDir);
 		
-			console.log("Tasks:");
-			console.log(this.taskManager.tasks());
+			//console.log("Tasks:");
+			//console.log(this.taskManager.tasks());
 		
 			// load templates
-			this.getTemplates(installedModules, this.workingDir).then((templates)=>{
-				templates.forEach(t=>this.taskManager.addTemplate(t))
-			}).then(c=>{
+			this.templateManager.getTemplates(installedModules, this.workingDir)
+			.then((templates)=>{
+				templates.forEach(t=>this.templateManager.addTemplate(t))})
+			.then(()=>{
 				
-				console.log("Templates:");
-				console.log(this.taskManager.templates());
+				//console.log("Templates:");
+				//console.log(this.templateManager.templates());
 				
 				// After the templates finished loading...
 				// begin building the app
-				var context: ExecutionContext = { appDef:appDef, currentItem:appDef, currentItemPath:"/", 
-													modelDef:modelDef, workingDir:this.workingDir};
+				var context: TaskExecutionContext = { appDef:appDef, currentItem:appDef, currentItemPath:"/", 
+														modelDef:modelDef, workingDir:this.workingDir};
 											
 				// Run the before build tasks
 				this.taskManager.run("before-build", context)
@@ -262,6 +237,7 @@ export class Builder {
 				.then(x=>this.buildObject(context))
 				// Run after build tasks
 				.then(()=>this.taskManager.run("after-build",context))
+				.then(()=>this.validateAppDef(context.appDef, context.modelDef))
 				.then(()=>this.saveAppDef(context))
 				.then(()=>this.saveModelDef(context))
 				.catch(console.log);

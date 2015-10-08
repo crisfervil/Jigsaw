@@ -1,7 +1,33 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "type": "object",
+  "name":"Application",
+  "pluralName":"Applications",
+  "description": "The object that holds all the information about the application",
   "definitions": {
+    "entityField":{
+      "name": "Entity Field",
+      "pluralName": "Entity Fields",
+      "type": "object",
+      "properties": {
+        "id": {
+          "name":"Id",
+          "type": "string"
+        },
+        "name": {
+          "name":"Name",
+          "type": "string"
+        },
+        "description": {
+          "name":"Description",
+          "type": "string"
+        },
+        "type": {
+          "name":"Type",
+          "type": "string"
+        }
+      }
+    },
     "entity": {
       "name": "Entity",
       "pluralName": "Entities",
@@ -19,15 +45,21 @@
           "description": "Name to be shown in lists of this entity",
           "type": "string"
         },
+        "description": {
+          "type": "string"
+        },
         "connection": {
-          "id": "connection",
           "type": "object",
           "properties": {
             "type": {
               "type": "string"
             }
           }
-        }
+        },
+        "fields":{
+          "type": "array",
+          "items": { "$ref":"#/definitions/entityField"}
+          }
       }
     }
   },
@@ -38,7 +70,7 @@
     "entities": {
       "type": "array",
       "items": {
-        "$ref": "#definitions/entity"
+        "$ref": "#/definitions/entity"
       }
     },
     "configuration": {

@@ -1,17 +1,19 @@
 /// <reference path="../typings/tsd.d.ts" />
-import {TaskManager, ExecutionContext} from "./tasks";
+import {TaskManager, TaskExecutionContext} from "./tasks";
+import {TemplateManager} from "./templates";
+
 import util = require("util");
 
-export = function(taskManager: TaskManager): void {
+export = function(taskManager: TaskManager, templateManager:TemplateManager): void {
 
-  taskManager.add("/", function(context: ExecutionContext) {
+  taskManager.add("/", function(context: TaskExecutionContext) {
     
     console.log("building %s...", context.appDef.name);
     // do stuff for building the app
     
   });
 
-  taskManager.add("/entities", function(context: ExecutionContext) {
+  taskManager.add("/entities", function(context: TaskExecutionContext) {
     var entity = context.currentItem;
     console.log("building entity %s...", entity.name);
     // do stuff for building the entity
@@ -19,12 +21,12 @@ export = function(taskManager: TaskManager): void {
     //if(entity.id=="account") throw "Unexpected Error";
 
     // call the template for generate the route
-    return taskManager.runTemplate("entities-route", context)
+    return templateManager.runTemplate("entities-route", context)
       .then(() => taskManager.run("/entities-db", context));
 
   });
 
-  taskManager.add("/entities-db", function(context: ExecutionContext) {
+  taskManager.add("/entities", function(context: TaskExecutionContext) {
     
     var entity = context.currentItem;
     console.log("building db level for entity %s...", entity.name);
@@ -39,12 +41,12 @@ export = function(taskManager: TaskManager): void {
     }
   });
 
-  taskManager.add("/entities/connection", function(context: ExecutionContext) {
+  taskManager.add("/entities/connection", function(context: TaskExecutionContext) {
     // do whatever
   });
 
 
-  taskManager.add("/entities-db-sqlserver", function(context: ExecutionContext) {
+  taskManager.add("/entities-db-sqlserver", function(context: TaskExecutionContext) {
     console.log("building SQL Server stuff for entity %s...", context.currentItem.name);
     // do stuff for building the entity
   });

@@ -4,7 +4,13 @@
     {
       "id": "contact",
       "name": "Contact",
-      "pluralName": "Contacts"
+      "pluralName": "Contacts",
+      "description":"Holds contact information of people",
+      "fields":[{
+        "id": "id",
+        "name": "Id",
+        "type":"string",
+        "description":"Unique identifier of the record"      }]
     },
     {
       "id": "account",
