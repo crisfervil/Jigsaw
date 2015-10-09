@@ -1,6 +1,5 @@
 export class Obj{
 
-
 	public static clone(obj) {
 		if (null == obj || "object" != typeof obj) return obj;
 		var copy = obj.constructor();
