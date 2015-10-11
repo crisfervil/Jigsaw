@@ -68,7 +68,7 @@ export class Builder {
 		if (tasks) {
 			return this.taskManager.runAll(tasks, context)
 			.then(
-				x=>this.buildProperty(context));
+				()=>this.buildProperty(context));
 		}
 		else {
 			// There aren't any tasks for defined fot the specified item
