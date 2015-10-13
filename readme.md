@@ -10,7 +10,7 @@ Avoid 1 to 5 if you already have those tools installed
 
 2 - Install git : https://desktop.github.com/
 
-3 - Open a comand prompt
+3 - Open a command prompt
 
 4 - Install Type script compiler (https://github.com/Microsoft/TypeScript)
 ```
@@ -38,7 +38,7 @@ $ tsc -p .
 ```
 10 - Link greenmouse (https://docs.npmjs.com/cli/link)
 ```
-$ npm link	
+$ npm link
 ```
 11- Move one dir up
 ```
@@ -56,7 +56,11 @@ $ cd greenmouse-app
 ```
 $ npm link greenmouse
 ```
-15 - Run Green Mouse installer
+15 - Install app dependencies
 ```
-$ node node_modules/greenmouse/run install
+$ npm install
+```
+16 - Run Green Mouse installer
+```
+$ gm install
 ```

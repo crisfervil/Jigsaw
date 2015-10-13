@@ -1,9 +1,9 @@
-// for: app/entities/item
-// output: app/routes/entities/{currentItem.id}.js
-// <%= output("app/routes/entities/" + currentItem.id + ".js") %>
+// item: app/entities/item
+// output: app/routes/{currentItem.id}.js
+// <%= output("app/routes/" + currentItem.id + ".js") %>
 /** router for entity <%= currentItem.name %>, application <%= appDef.name %> */
 
-var db=require("../../../app/db/entities/<%= currentItem.id %>");
+var db=require("../entities/<%= currentItem.id %>");
 
 function configureRoutes (app){
     app.get('/api/<%= currentItem.id %>', function(req, res) {

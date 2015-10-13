@@ -1,12 +1,13 @@
+#! /usr/bin/env node
 /// <reference path="typings/tsd.d.ts" />
 
-import {Builder} from "./build/builder"
+import {Builder} from "../build/builder"
 import path = require("path");
 
 var cmdLineArgs = process.argv;
 
 function showHelp(){
-	console.log("USE: grennmouse install")
+	console.log("USE: gm install")
 }
 
 function install(workingDir:string){
@@ -19,7 +20,7 @@ function install(workingDir:string){
 }
 
 if(cmdLineArgs.length>1){
-	var workingDir = process.cwd();	
+	var workingDir = process.cwd();
 	var command = cmdLineArgs[2];
 	if(command=="install"){
 		install(workingDir);

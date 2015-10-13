@@ -6,6 +6,9 @@
   "devDependencies": {
     "mocha": "^2.3.3"
   },
+  "bin": {
+  "gm": "bin/run.js"
+  },
   "engines": {
     "node": ">=0.10.0"
   },

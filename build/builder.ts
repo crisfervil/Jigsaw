@@ -13,10 +13,10 @@ export class Builder {
 
 	private taskManager:TaskManager = new TaskManager();
 	private templateManager:TemplateManager = new TemplateManager();
-	
+
 	constructor(private workingDir:string){
 	}
-	
+
 	/**
 	 * Searches for json files in installed modules, merge found objects and returns the result
 	 */
@@ -32,19 +32,19 @@ export class Builder {
 		}
 		return jsonObj;
 	}
-		
+
 	private getRoot(m:NodeModule):NodeModule{
 		var root = m;
 		while(root.parent) root = root.parent;
 		return root;
 	}
-	
+
 	private tryGetModule(moduleId:string){
 		var result = null;
 		try{
 			result = require(moduleId);
 		}catch(e){}
-		
+
 		return result;
 	}
 
@@ -58,7 +58,7 @@ export class Builder {
 			}
 		}
 	}
-	
+
 	/**
 	* Builds the current object and returns a Promise
 	*/
@@ -67,26 +67,27 @@ export class Builder {
 		var tasks = this.taskManager.get(context.currentItemPath);
 		if (tasks) {
 			return this.taskManager.runAll(tasks, context)
-			.then(
-				()=>this.buildProperty(context));
+			.then(()=>this.templateManager.runTemplateOnContext(context))
+			.then(()=>this.buildProperty(context));
 		}
 		else {
 			// There aren't any tasks for defined fot the specified item
 			// so, we run the tasks for the inner objects
-			return this.buildProperty(context);	
+			return this.templateManager.runTemplateOnContext(context)
+			.then(()=>this.buildProperty(context));
 		}
 	}
 
-	
+
 	/**
 	 * Builds every property in the current Item, and returns a Promise
 	 */
 	private buildProperty(context:TaskExecutionContext, properties?:Array<string>,currentPropertyIndex?:number):Promise<TaskExecutionContext>{
-		
+
 		// optional parameters
 		if(!properties && typeof context.currentItem == "object") properties = Object.keys(context.currentItem);
 		if(!currentPropertyIndex) currentPropertyIndex = 0;
-	
+
 		if(properties && currentPropertyIndex<properties.length){
 			var propName = properties[currentPropertyIndex];
 			var propValue = context.currentItem[propName];
@@ -103,7 +104,7 @@ export class Builder {
 					.then(
 						x=>this.buildProperty(context, properties, currentPropertyIndex+1));
 				}
-				else if (!(propValue instanceof Date)) { 
+				else if (!(propValue instanceof Date)) {
 					// the property is a regular object
 					// Copy the context, so later calls doesn't change it
 					var context2 = Obj.clone(context);
@@ -126,7 +127,7 @@ export class Builder {
 		// TODO: Is this line required?
 		return Promise.resolve();
 	}
-	
+
 	/**
 	*	Builds every element in the array and returns a Promise
 	*/
@@ -142,7 +143,7 @@ export class Builder {
 		// TODO: Is this line required?
 		return Promise.resolve();
 	}
-	
+
 	private saveAppDef(context:TaskExecutionContext){
 		// save the app definition to the data folder
 		var destPath = path.join(context.workingDir,"/data/app.json");
@@ -156,17 +157,17 @@ export class Builder {
 		//console.log(context.modelDef);
 		return fs.saveJSON(context.modelDef,destPath)
 	}
-	
+
 	/**
 	 * Validates app definition against the model definition
 	 */
 	private isAppDefValid(appDef, modelDef) {
-	
-		var isValid=false;	
+
+		var isValid=false;
 		var sch:tv4.JsonSchema = modelDef;
 		var validator = jsonValidator.freshApi();
 		var errors = validator.validateMultiple(appDef,sch, false, true);
-		
+
 		if(!errors.valid||errors.missing.length>0){
 			console.log("Error: Application definition validation KO");
 			console.log(errors);
@@ -175,27 +176,27 @@ export class Builder {
 			console.log("Application definition OK");
 			isValid = true;
 		}
-		
+
 		return isValid;
 	}
-	
+
 	private validateAppDef(appDef, modelDef){
 		var isValid = this.isAppDefValid(appDef, modelDef);
 		if(!isValid){
 			throw "Application definition is not valid";
 		}
 	}
-	
+
 	private handleError(error){
 		console.log(error);
 	}
-	
+
 	public build(): void {
-		
+
 		var appPkgId = path.join(this.workingDir,"package.json");
 		var appPkg = require(appPkgId);
 		var installedModules = appPkg.config.greenmouse.packages;
-		
+
 		var modelDef = this.buildJson(installedModules, this.workingDir,"model");
 		var appDef = this.buildJson(installedModules, this.workingDir,"app");
 
@@ -214,26 +215,26 @@ export class Builder {
 		// validate app def against model definition
 		var appDefValid = this.isAppDefValid(appDef,modelDef);
 		if(appDefValid){
-			
+
 			// Load tasks...
 			this.loadBuildTasks(installedModules, this.workingDir);
-		
+
 			//console.log("Tasks:");
 			//console.log(this.taskManager.tasks());
-		
+
 			// load templates
 			this.templateManager.getTemplates(installedModules, this.workingDir)
 			.then(x=>this.templateManager.addTemplates(x))
 			.then(()=>{
-				
+
 				console.log("Templates:");
 				console.log(this.templateManager.templates());
-				
+
 				// After the templates finished loading...
 				// begin building the app
-				var context: TaskExecutionContext = { appDef:appDef, currentItem:appDef, currentItemPath:"/", 
+				var context: TaskExecutionContext = { appDef:appDef, currentItem:appDef, currentItemPath:"app",
 														modelDef:modelDef, workingDir:this.workingDir};
-											
+
 				// Run the before build tasks
 				this.taskManager.run("before-build", context)
 				// build the app
@@ -244,7 +245,7 @@ export class Builder {
 				.then(()=>this.saveAppDef(context))
 				.then(()=>this.saveModelDef(context))
 				.catch(this.handleError);
-			}).catch(this.handleError);			
+			}).catch(this.handleError);
 		}
 	}
 }

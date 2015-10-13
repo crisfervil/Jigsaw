@@ -66,7 +66,7 @@ function (taskManager:TaskManager, templateManager:TemplateManager):void {
 
     });
 
-    taskManager.add("/", function (context:TaskExecutionContext) {
+    taskManager.add("application", function (context:TaskExecutionContext) {
 
         // copy metadata db
         return fs.copyFile(path.join(process.cwd(), "/node_modules/greenmouse/db/jsonDB.js"), path.join(process.cwd(), "/app/db/jsonDB.js"));

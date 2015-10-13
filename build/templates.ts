@@ -6,12 +6,15 @@ import {fs} from "../util/fs";
 import util = require("util");
 import ejs = require("ejs");
 
+import {TaskExecutionContext} from "./tasks";
 
 export class Template {
     id:string;
     path:string;
     module:string;
     content:string;
+    item:{path:string,criteria:string};
+    output:string;
 }
 
 export class TemplateExecutionContext {
@@ -55,15 +58,62 @@ export class TemplateManager {
         return fs.readFile(templatePath).then<string>(data=>data.toString());
     }
 
+    //* Sets the template content and tries to read the item and output from it */
+    private setContent(template:Template,content:string){
+      template.content=content;
+
+      var templateLines = content.split("\n");
+
+      if(templateLines.length>0){
+        template.item = this.getItemFromTemplate(templateLines[0]);
+        if(!template.item) template.item = this.getItemFromTemplate(templateLines[1]);
+        template.output = this.getOutputFromTemplate(templateLines[0]);
+        if(!template.output) template.output = this.getOutputFromTemplate(templateLines[1]);
+      }
+    }
+
+    private getItemFromTemplate(templateLine:string){
+      var result:{path:string,criteria:string};
+      var re = /\/+\**\s*item\s*:\s*(.*)/g;
+      var found = re.exec(templateLine);
+      if(found){
+        if(found.length>1)
+          var re2 = /([^[]*)(\[([^\]]+)\])*/g
+          var found2 = re2.exec(found[1]);
+          if(found2){
+            if(found2.length>0){
+              result = {path:found2[1],criteria:null};
+              if(found2.length>2)
+                result.criteria = found2[3];
+            }
+          }
+      }
+      return result;
+    }
+
+    private getOutputFromTemplate(templateLine:string){
+      var result:string;
+      var re = /\/+\**\s*output\s*:\s*(.*)/g;
+      var found = re.exec(templateLine);
+      if(found){
+        if(found.length>1)
+          result = found[1];
+      }
+      return result;
+    }
+
     private loadTemplatesContent(templates:Array<Template>, workingDir:string):Promise<Template[]> {
-        var promises = new Array<Promise<string>>();
+        var promises = new Array<Promise<void>>();
 
         for (var i = 0; i < templates.length; i++) {
             var template = templates[i];
-            var promise =
-                this.getTemplateContent(template, workingDir)
-                    .then(content=>template.content = content);
+
+            ((t)=>{
+              var promise =
+                this.getTemplateContent(t, workingDir)
+                    .then(content=>this.setContent(t,content));
             promises.push(promise);
+          })(template);
         }
 
         return Promise.all(promises).then<Template[]>(x=>templates);
@@ -124,6 +174,13 @@ export class TemplateManager {
             // Add the returned templates[][] to the templates array
             .then(allTemplates=>allTemplates.forEach(someTemplates=>someTemplates.forEach(template=>returnTemplates.push(template))))
             .then<Template[]>(x=>returnTemplates);
+    }
+
+    public runTemplateOnContext(context:TaskExecutionContext):Promise<any>{
+      for(var i=0;i<this._templates.length;i++){
+
+      }
+      return Promise.resolve();
     }
 
     public runTemplate(id:string, context:TemplateExecutionContext) {
