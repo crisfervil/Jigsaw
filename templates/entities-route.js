@@ -1,6 +1,5 @@
 // item: app/entities/item
-// output: app/routes/{currentItem.id}.js
-// <%= output("app/routes/" + currentItem.id + ".js") %>
+// output: app/routes/<%=currentItem.id%>.js
 /** router for entity <%= currentItem.name %>, application <%= appDef.name %> */
 
 var db=require("../entities/<%= currentItem.id %>");

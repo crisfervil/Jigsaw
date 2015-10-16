@@ -16,7 +16,7 @@ function (taskManager:TaskManager, templateManager:TemplateManager):void {
     });
 
     // Run entities-db-* template
-    taskManager.add("app/entities", function (context:TaskExecutionContext) {
+    taskManager.add("app/entities/item", function (context:TaskExecutionContext) {
         var entity = context.currentItem;
         if (entity.connection && entity.connection.type) {
             // depending on the entity connection, execute a specific template

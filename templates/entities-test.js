@@ -1,9 +1,8 @@
 // item: app/entities/item
-// output: app/test/{currentItem.id}.js
-// <%= output("app/test/" + currentItem.id + ".js") %>
+// output: test/<%=currentItem.id%>.js
 /** tests for the entity <%= currentItem.name %>, application <%= appDef.name %> */
 
-var entityManager=require("../entities/<%= currentItem.id %>");
+var entityManager=require("../app/entities/<%= currentItem.id %>");
 var assert = require("assert");
 
 
@@ -17,3 +16,4 @@ describe('entities', function () {
             });
           });
         });
+      });

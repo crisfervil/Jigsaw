@@ -106,12 +106,12 @@ export class Builder {
             var propValue = context.currentItem[propName];
 
             if (propValue != null && typeof propValue == "object") {
-                var currentPropPath = path.join(context.currentItemPath, propName).replace("\\", "/");
+                var currentPropPath = path.join(context.currentItemPath, propName).replace(/\\/g, "/");
                 if (Array.isArray(propValue)) {
                     var arrayProp: Array<any> = propValue;
                     // Copy the context, so later calls doesn't change it
                     var context2 = Obj.clone(context);
-                    context2.currentItemPath = currentPropPath;
+                    context2.currentItemPath = path.join(currentPropPath, "item").replace(/\\/g, "/");;
                     // if the property is an array, build it as an array
                     returnValue = this.buildArray(context2, arrayProp, 0)
                         .then(() => this.buildProperty(context, properties, currentPropertyIndex + 1)); // then, build the next property

@@ -179,31 +179,75 @@ export class TemplateManager {
 
     private matchesTemplateCriteria(criteria:string, context:TaskExecutionContext):boolean{
       var returnValue = false;
-      console.log("evaluating vrireria...");
       try{
-        criteria = "console.log(context)";
+        // TODO: Improve this. Is awful
+        returnValue = eval(criteria);
       }catch(err){
+        console.log("warnig: error evaluating template criteria: %s", criteria);
         console.log(err);
       }
-      returnValue = eval(criteria);
+
 
       return returnValue;
     }
 
     public runTemplateOnContext(context:TaskExecutionContext):Promise<any>{
+      var returnValue = Promise.resolve<void>();
+      var promises = new Array<Promise<void>>();
       for(var i=0;i<this._templates.length;i++){
         var currentTemplate = this._templates[i];
+        //console.log("t:"+currentTemplate.item.path);
+        //console.log("i:"+context.currentItemPath);
         if(currentTemplate.item && currentTemplate.item.path==context.currentItemPath){
-          console.log("running template %s", currentTemplate.id);
+          var matches = false;
           if(currentTemplate.item.criteria){
-              var matches = this.matchesTemplateCriteria(currentTemplate.item.criteria, context);
-              if(matches){
-
-              }
+              matches = this.matchesTemplateCriteria(currentTemplate.item.criteria, context);
+          }
+          if(!currentTemplate.item.criteria||matches){
+            var curPromise = this._runTemplate(currentTemplate,context);
+            promises.push(curPromise);
           }
         }
       }
-      return Promise.resolve();
+      returnValue = Promise.all(promises)
+                    .then<void>(x=>{});// this just to convert returned values to void
+      return returnValue;
+    }
+
+    private _runTemplate(template:Template, context:TemplateExecutionContext) {
+        return new Promise<void>((resolve, reject)=> {
+
+          // render the template using ejs
+          // TODO: Allow other template engines
+          console.log("running template %s...", template.id);
+          var templateContext:any = context; // used just to convert to the appropriate type
+          var result = ejs.render(template.content, templateContext);
+
+          var resultOutputPath= ejs.render(template.output, templateContext);
+
+          if (resultOutputPath) {
+              if (!path.isAbsolute(resultOutputPath)) {
+                  // TODO: Change the working dir for the output dir
+                  resultOutputPath = path.join(context.workingDir, resultOutputPath);
+              }
+              fs.mkdirP(path.dirname(resultOutputPath), error=> {
+                  if (!error){
+                      fs.writeFile(result, resultOutputPath)
+                          .then(()=>resolve())
+                          .catch(reject);
+                  }
+                  else{
+                    reject(error);
+                  }
+              });
+          }
+          else {
+              var error = util.format("No output path found for template: %s", template.id);
+              reject(error);
+          }
+
+
+        });
     }
 
     public runTemplate(id:string, context:TemplateExecutionContext) {
@@ -218,39 +262,4 @@ export class TemplateManager {
             return this._runTemplate(template, context);
     }
 
-    private _runTemplate(template:Template, context:TemplateExecutionContext) {
-        return new Promise((resolve, reject)=> {
-            this.getTemplateContent(template, context.workingDir)
-                .then(content=> {
-
-                    var resultOutputPath = null;
-                    var templateParams:any = context;
-                    templateParams.output = (x)=>resultOutputPath = x;
-
-                    // render the template using ejs
-                    // TODO: Allow other template engines
-                    console.log("running template %s...", template.id);
-                    var result = ejs.render(content, templateParams);
-                    if (resultOutputPath) {
-                        if (!path.isAbsolute(resultOutputPath)) {
-                            // TODO: Change the working dir for the output dir
-                            resultOutputPath = path.join(context.workingDir, resultOutputPath);
-                        }
-                        fs.mkdirP(path.dirname(resultOutputPath), error=> {
-                            if (!error)
-                                fs.writeFile(result, resultOutputPath)
-                                    .then(resolve)
-                                    .catch(error=>reject(error));
-                            else
-                                reject(error);
-                        });
-                    }
-                    else {
-                        var error = util.format("No output path found for template: %s", template.id);
-                        reject(error);
-                    }
-                })
-                .catch(reject);
-        });
-    }
 }

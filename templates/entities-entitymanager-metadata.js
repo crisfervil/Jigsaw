@@ -1,6 +1,5 @@
-// item: app/entities/item[connection.type="metadata"]
-// output: app/entities/{currentItem.id}.js
-// <%= output("app/entities/" + currentItem.id + ".js") %>
+// item: app/entities/item[context.currentItem.connection.type=="metadata"]
+// output: app/entities/<%=currentItem.id%>.js
 /** entity manager for entity <%= currentItem.name %>, application <%= appDef.name %> */
 var jsonDb = require("../db/jsonDB");
 var path = require("path");
