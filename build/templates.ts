@@ -83,8 +83,9 @@ export class TemplateManager {
           if(found2){
             if(found2.length>0){
               result = {path:found2[1],criteria:null};
-              if(found2.length>2)
+              if(found2.length>2){
                 result.criteria = found2[3];
+              }
             }
           }
       }
@@ -176,9 +177,31 @@ export class TemplateManager {
             .then<Template[]>(x=>returnTemplates);
     }
 
+    private matchesTemplateCriteria(criteria:string, context:TaskExecutionContext):boolean{
+      var returnValue = false;
+      console.log("evaluating vrireria...");
+      try{
+        criteria = "console.log(context)";
+      }catch(err){
+        console.log(err);
+      }
+      returnValue = eval(criteria);
+
+      return returnValue;
+    }
+
     public runTemplateOnContext(context:TaskExecutionContext):Promise<any>{
       for(var i=0;i<this._templates.length;i++){
+        var currentTemplate = this._templates[i];
+        if(currentTemplate.item && currentTemplate.item.path==context.currentItemPath){
+          console.log("running template %s", currentTemplate.id);
+          if(currentTemplate.item.criteria){
+              var matches = this.matchesTemplateCriteria(currentTemplate.item.criteria, context);
+              if(matches){
 
+              }
+          }
+        }
       }
       return Promise.resolve();
     }

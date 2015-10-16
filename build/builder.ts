@@ -14,8 +14,8 @@ export class Builder {
 
     private _taskManager: TaskManager = new TaskManager();
     private _templateManager: TemplateManager = new TemplateManager();
-    private _appDef:any;
-    private _modelDef:any;
+    private _appDef: any;
+    private _modelDef: any;
 
     constructor(private workingDir: string) {
     }
@@ -66,19 +66,23 @@ export class Builder {
 	* Builds the current object and returns a Promise
 	*/
     private buildObject(context: TaskExecutionContext): Promise<TaskExecutionContext> {
+        // the default return value will be a resolved promise
+        var returnValue: Promise<TaskExecutionContext> = Promise.resolve(context);
+
         // Run the task with the specified item path
         var tasks = this._taskManager.get(context.currentItemPath);
         if (tasks) {
-            return this._taskManager.runAll(tasks, context)
+            returnValue = this._taskManager.runAll(tasks, context)
                 .then(() => this._templateManager.runTemplateOnContext(context))
                 .then(() => this.buildProperty(context));
         }
         else {
             // There aren't any tasks for defined fot the specified item
             // so, we run the tasks for the inner objects
-            return this._templateManager.runTemplateOnContext(context)
+            returnValue = this._templateManager.runTemplateOnContext(context)
                 .then(() => this.buildProperty(context));
         }
+        return returnValue;
     }
 
     /**
@@ -86,13 +90,21 @@ export class Builder {
     */
     private buildProperty(context: TaskExecutionContext, properties?: Array<string>, currentPropertyIndex?: number): Promise<TaskExecutionContext> {
 
+        // the default return value will be a resolved promise
+        var returnValue: Promise<TaskExecutionContext> = Promise.resolve(context);
+
         // optional parameters
-        if (!properties && typeof context.currentItem == "object") properties = Object.keys(context.currentItem);
-        if (!currentPropertyIndex) currentPropertyIndex = 0;
+        if (!properties && typeof context.currentItem == "object") {
+            properties = Object.keys(context.currentItem);
+        }
+        if (!currentPropertyIndex) {
+            currentPropertyIndex = 0;
+        }
 
         if (properties && currentPropertyIndex < properties.length) {
             var propName = properties[currentPropertyIndex];
             var propValue = context.currentItem[propName];
+
             if (propValue != null && typeof propValue == "object") {
                 var currentPropPath = path.join(context.currentItemPath, propName).replace("\\", "/");
                 if (Array.isArray(propValue)) {
@@ -101,48 +113,46 @@ export class Builder {
                     var context2 = Obj.clone(context);
                     context2.currentItemPath = currentPropPath;
                     // if the property is an array, build it as an array
-                    return this.buildArray(context2, arrayProp, 0)
-                        // then, build the next property
-                        .then(
-                        x=> this.buildProperty(context, properties, currentPropertyIndex + 1));
+                    returnValue = this.buildArray(context2, arrayProp, 0)
+                        .then(() => this.buildProperty(context, properties, currentPropertyIndex + 1)); // then, build the next property
                 }
-                else if (!(propValue instanceof Date)) {
+                else if (!(propValue instanceof Date)) { // The Date objects are typeof == "object" too
                     // the property is a regular object
-                    // Copy the context, so later calls doesn't change it
+                    // Copy the context, so if a later call changes it, it doesn't affect the execution
                     var context2 = Obj.clone(context);
                     context2.currentItemPath = currentPropPath;
                     context2.currentItem = propValue;
                     // Build it
-                    return this.buildObject(context2)
-                        // And then, build the next property
-                        .then(x=>
-                            this.buildProperty(context, properties, currentPropertyIndex + 1));
+                    returnValue = this.buildObject(context2)
+                        .then(() => this.buildProperty(context, properties, currentPropertyIndex + 1)); // then, build the next property
                 }
             }
             else {
                 // the property value type is a native type. Doesn't require to be built
-                // Build the next property
-                return this.buildProperty(context, properties, currentPropertyIndex + 1)
+                returnValue = this.buildProperty(context, properties, currentPropertyIndex + 1); // Build the next property
             }
         }
-        // TODO: Is this line required?
-        return Promise.resolve();
+
+        return returnValue;
     }
 
 	/**
 	*	Builds every element in the array and returns a Promise
 	*/
     private buildArray(context: TaskExecutionContext, array: Array<any>, currentIndex: number): Promise<TaskExecutionContext> {
+
+        // the default return value will be a resolved promise
+        var returnValue: Promise<TaskExecutionContext> = Promise.resolve(context);
+
         if (currentIndex < array.length) {
             // The current item changes in every iteration
             // the current path remains the same. All the elements in the array share the same path
             context.currentItem = array[currentIndex];
             return this.buildObject(context)
-                .then(
-                x=> this.buildArray(context, array, currentIndex + 1));
+                .then(()=> this.buildArray(context, array, currentIndex + 1));
         }
-        // TODO: Is this line required?
-        return Promise.resolve();
+
+        return returnValue;
     }
 
     private saveAppDef(context: TaskExecutionContext) {
@@ -187,13 +197,13 @@ export class Builder {
         console.log(error);
     }
 
-		public templateManager(){
-			return this._templateManager;
-		}
+    public templateManager() {
+        return this._templateManager;
+    }
 
-		public taskManager(){
-			return this._taskManager;
-		}
+    public taskManager() {
+        return this._taskManager;
+    }
 
     /** Loads the tasks, templates, models and definitions for the current application  */
     public load() {
@@ -254,21 +264,21 @@ export class Builder {
 
     public build() {
 
-      var returnValue: Promise<any>;
+        var returnValue: Promise<any>;
 
-      // begin building the app
-      var context: TaskExecutionContext = {
-          appDef: this._appDef, currentItem: this._appDef, currentItemPath: "app",
-          modelDef: this._modelDef, workingDir: this.workingDir
-      };
-      returnValue = this._taskManager.run("before-build", context) // Run the before build tasks
-                    .then(() => this.buildObject(context)) // Navigate the objects in the appDef and execute templates and tasks for each item
-                    .then(() => this._taskManager.run("after-build", context)) // Run after build tasks
-                    .then(() => this.validateAppDef(context.appDef, context.modelDef)) // Validate changes in the appDef
-                    .then(() => this.saveAppDef(context)) // Persist the appDef
-                    .then(() => this.saveModelDef(context)) // Persist the modelDeg
-                    .catch(this.handleError);
+        // begin building the app
+        var context: TaskExecutionContext = {
+            appDef: this._appDef, currentItem: this._appDef, currentItemPath: "app",
+            modelDef: this._modelDef, workingDir: this.workingDir
+        };
+        returnValue = this._taskManager.run("before-build", context) // Run the before build tasks
+            .then(() => this.buildObject(context)) // Navigate the objects in the appDef and execute templates and tasks for each item
+            .then(() => this._taskManager.run("after-build", context)) // Run after build tasks
+            .then(() => this.validateAppDef(context.appDef, context.modelDef)) // Validate changes in the appDef
+            .then(() => this.saveAppDef(context)) // Persist the appDef
+            .then(() => this.saveModelDef(context)) // Persist the modelDeg
+            .catch(this.handleError);
 
-      return returnValue;
+        return returnValue;
     }
 }

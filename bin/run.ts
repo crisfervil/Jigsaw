@@ -29,7 +29,7 @@ function show(){
     builder.load() // load before listing things
     .then(()=>{
         console.log("templates:");
-        var templatesString = JSON.stringify(builder.templateManager().templates(),["id","path","module","item","output"],2);
+        var templatesString = JSON.stringify(builder.templateManager().templates(),["id","path","module","item","output","criteria"],2);
 		    console.log(templatesString);
 
         console.log("tasks:");
