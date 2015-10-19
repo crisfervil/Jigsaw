@@ -54,7 +54,7 @@ export class Builder {
     private loadBuildTasks(installedModules: Array<string>, workingDir: string) {
         for (var i = 0; i < installedModules.length; i++) {
             var installedModule = installedModules[i];
-            var buildTaskModuleId = path.join(workingDir, "node_modules", installedModule, "build/buildTasks");
+            var buildTaskModuleId = path.join(workingDir, "node_modules", installedModule, "tasks");
             var buildTaskModule = this.tryGetModule(buildTaskModuleId);
             if (buildTaskModule) {
                 buildTaskModule(this._taskManager, this._templateManager);

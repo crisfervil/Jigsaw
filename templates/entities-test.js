@@ -9,10 +9,15 @@ var assert = require("assert");
 describe('entities', function () {
     describe("<%= currentItem.id %>", function () {
         describe('select', function () {
-            it('should returns all the items without any criteria', function () {
+            it('should returns all the items without any criteria', function (done) {
                 var criteria = {};
-                var result = entityManager.select(criteria);
-                assert.notEqual(result,null,"result: " + JSON.stringify(result));
+                var actual =
+                entityManager.instance.select(criteria)
+                .then(function(){
+                  // test if there is any result
+                  assert.equal(actual==null, true, "actual: " + JSON.stringify(actual));
+                    done();
+                });
             });
           });
         });

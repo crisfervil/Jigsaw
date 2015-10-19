@@ -1,2 +1,2 @@
-// item: app
-// output: app/entities/{currentItem.id}.js
+// item: test
+// output: app/entities/<%=currentItem.id%>.js

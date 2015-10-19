@@ -219,7 +219,7 @@ export class TemplateManager {
 
           // render the template using ejs
           // TODO: Allow other template engines
-          console.log("running template %s...", template.id);
+          console.log("running template %s for %s...", template.id, context.currentItemPath);
           var templateContext:any = context; // used just to convert to the appropriate type
           var result = ejs.render(template.content, templateContext);
 

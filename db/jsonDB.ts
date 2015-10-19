@@ -1,13 +1,18 @@
-/// <reference path="../typings/tsd.d.ts" />
+/// <reference path="../typings/tsd.d.ts"/>
 
 import {Obj} from "../util/obj";
 import {fs} from "../util/fs";
 import util = require("util");
 
+
+enum Status {Loading,Ready};
+
 export class jsonDB {
 
     private dbData:Object;
     private _dbPath:string;
+
+    private _state:Status = Status.Ready;
 
     constructor(defaultData?:any) {
         this.dbData = defaultData || {};
@@ -25,14 +30,20 @@ export class jsonDB {
         return returnValue;
     }
 
+    public state(){
+        return this._state;
+    }
+
     /** indicates that the db was loaded successfully from path */
     public dbPath(){
         return this._dbPath;
     }
 
     public load(path:string){
+        this._state = Status.Loading;
         return fs.loadJSON(path)
             .then(obj=>{
+                this._state = Status.Ready;
                 this.dbData=obj;
                 this._dbPath=path;
             });
@@ -43,6 +54,9 @@ export class jsonDB {
     }
 
     public select(objectPath:string, currentObj?):any {
+
+        if(this._state!=Status.Ready) throw new Error("invalid db state");
+
         currentObj = currentObj || this.dbData;
         var pathParts = objectPath.split("/");
         var currentItemInPath = pathParts[0];
@@ -67,6 +81,9 @@ export class jsonDB {
     }
 
     public insert(objectPath:string, data, currentObj?) {
+
+      if(this._state!=Status.Ready) throw new Error("invalid db state");
+
         currentObj = currentObj || this.dbData;
         var pathParts = objectPath.split("/");
         var currentItemInPath = pathParts[0];
@@ -103,6 +120,9 @@ export class jsonDB {
     }
 
     public update(objectPath:string, data) {
+
+      if(this._state!=Status.Ready) throw new Error("invalid db state");
+
         var existing = this.select(objectPath);
         if (!existing) {
             throw new Error(util.format("Object not found in %s", objectPath));
@@ -112,6 +132,9 @@ export class jsonDB {
     }
 
     public delete(objectPath:string) {
+
+      if(this._state!=Status.Ready) throw new Error("invalid db state");
+
         var existing = this.select(objectPath);
         if (!existing) {
             throw new Error(util.format("Object not found in %s", objectPath));
