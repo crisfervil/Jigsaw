@@ -1,13 +1,25 @@
 /// <reference path="../typings/tsd.d.ts" />
 /// <reference path="../typings/custom.d.ts" />
 
-import path = require("path");
 import {fs} from "../util/fs";
+import path = require("path");
 import util = require("util");
+
+// decorator
+export function task(selector:string) {
+  return (_target: Object, methodName: string) => {
+      var taskDefinitions = _target["$taskDefinitions"];
+      if (taskDefinitions===undefined||taskDefinitions===null) taskDefinitions = [];
+      taskDefinitions.push({methodName:methodName,selector:selector});
+      _target["$taskDefinitions"]=taskDefinitions;
+  }
+}
+
+export class TaskSet { $taskDefinitions: Array<{methodName:string,selector:string}>; };
 
 export class Task {
     id:string;
-    module:string;
+    selector:string;
     action:(context:TaskExecutionContext) => any;
 }
 
@@ -22,11 +34,12 @@ export class TaskExecutionContext {
 export class TaskManager {
     private _tasks:Array<Task> = [];
 
-    public add(id, action:(context:TaskExecutionContext)=>any) {
+    public add(id:string, selector:string, action:(context:TaskExecutionContext)=>any) {
         // TODO: Check if the task id already exist for the same module
         var newTask = new Task();
         newTask.id = id;
         newTask.action = action;
+        newTask.selector = selector;
         this._tasks.push(newTask);
     }
 
@@ -58,6 +71,7 @@ export class TaskManager {
         var promises:Array<Promise<TaskExecutionContext>> = [];
         for (var i = 0; i < tasks.length; i++) {
             var task = tasks[i];
+            // This runs all the tasks in parallel
             var p = this._run(task, context);
             promises.push(p);
         }

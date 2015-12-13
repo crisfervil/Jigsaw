@@ -1,22 +1,4 @@
 {
   "name": "Green Mouse",
-  "entities": [
-    {
-      "id": "contact",
-      "name": "Contact",
-      "pluralName": "Contacts",
-      "description":"Holds contact information of people",
-      "fields":[{
-        "id": "id",
-        "name": "Id",
-        "type":"string",
-        "description":"Unique identifier of the record"      }]
-    },
-    {
-      "id": "account",
-      "name": "Account",
-      "pluralName": "Accounts"
-    }
-  ],
   "configuration":{ }
 }

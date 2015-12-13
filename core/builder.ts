@@ -4,7 +4,8 @@
 import util = require("util");
 import path = require("path");
 import jsonValidator = require('tv4');
-import {Task, TaskExecutionContext, TaskManager} from "./tasks";
+
+import {Task, TaskSet, TaskExecutionContext, TaskManager} from "./tasks";
 import {Template, TemplateExecutionContext, TemplateManager} from "./templates";
 
 import {fs} from "../util/fs";
@@ -17,12 +18,14 @@ export class Builder {
     private _appDef: any;
     private _modelDef: any;
 
+    installedModules: string[] = [];
+
     constructor(private workingDir: string) {
     }
 
-	/**
-	 * Searches for json files in installed modules, merge found objects and returns the result
-	 */
+    /**
+    * Searches for json files in installed modules, merge found objects and returns the result
+    */
     private buildJson(installedModules: Array<string>, workingDir: string, fileName: string) {
         var jsonObj: any = {};
         for (var i = 0; i < installedModules.length; i++) {
@@ -51,20 +54,47 @@ export class Builder {
         return result;
     }
 
-    private loadBuildTasks(installedModules: Array<string>, workingDir: string) {
-        for (var i = 0; i < installedModules.length; i++) {
-            var installedModule = installedModules[i];
-            var buildTaskModuleId = path.join(workingDir, "node_modules", installedModule, "tasks");
-            var buildTaskModule = this.tryGetModule(buildTaskModuleId);
-            if (buildTaskModule) {
-                buildTaskModule(this._taskManager, this._templateManager);
+    private loadTaskSet(taskModule: TaskSet, moduleName:string) {
+        if (taskModule.$taskDefinitions !== undefined) {
+            for (var taskItem of taskModule.$taskDefinitions) {
+                var taskId = path.join(moduleName,taskItem.methodName);
+                this._taskManager.add(taskId, taskItem.selector, taskModule[taskItem.methodName]);
             }
         }
     }
 
-	/**
-	* Builds the current object and returns a Promise
-	*/
+    private loadTaskModule(taskModule, moduleName:string) {
+        if (taskModule instanceof TaskSet) {
+            this.loadTaskSet(taskModule, moduleName);
+        }
+        else if (typeof taskModule == "object") {
+            for (var propName in taskModule) {
+                var propValue = taskModule[propName];
+                if (typeof propValue === "function") {
+                    var propValueInstance = new propValue();
+                    if (propValueInstance instanceof TaskSet) {
+                        var thisModuleName = path.join(moduleName,propName);
+                        this.loadTaskSet(propValueInstance, thisModuleName);
+                    }
+                }
+            }
+        }
+    }
+
+    private loadBuildTasks(installedModules: Array<string>, workingDir: string) {
+        for (var i = 0; i < installedModules.length; i++) {
+            var installedModule = installedModules[i];
+            var taskModuleId = path.join(workingDir, "node_modules", installedModule, "tasks");
+            var taskModule = this.tryGetModule(taskModuleId);
+            if (taskModule) {
+                this.loadTaskModule(taskModule, installedModule);
+            }
+        }
+    }
+
+  	/**
+  	* Builds the current object and returns a Promise
+  	*/
     private buildObject(context: TaskExecutionContext): Promise<TaskExecutionContext> {
         // the default return value will be a resolved promise
         var returnValue: Promise<TaskExecutionContext> = Promise.resolve(context);
@@ -136,9 +166,9 @@ export class Builder {
         return returnValue;
     }
 
-	/**
-	*	Builds every element in the array and returns a Promise
-	*/
+  	/**
+  	*	Builds every element in the array and returns a Promise
+  	*/
     private buildArray(context: TaskExecutionContext, array: Array<any>, currentIndex: number): Promise<TaskExecutionContext> {
 
         // the default return value will be a resolved promise
@@ -149,7 +179,7 @@ export class Builder {
             // the current path remains the same. All the elements in the array share the same path
             context.currentItem = array[currentIndex];
             return this.buildObject(context)
-                .then(()=> this.buildArray(context, array, currentIndex + 1));
+                .then(() => this.buildArray(context, array, currentIndex + 1));
         }
 
         return returnValue;
@@ -169,9 +199,9 @@ export class Builder {
         return fs.saveJSON(context.modelDef, destPath)
     }
 
-	/**
-	 * Validates a Json object against a model definition. Returns found errors.
-	 */
+    /**
+    * Validates a Json object against a model definition. Returns found errors.
+    */
     private getSchemaErrors(jsonObj, jsonSchema) {
         var errorsStr: string;
         var isValid = false;
@@ -205,25 +235,29 @@ export class Builder {
         return this._taskManager;
     }
 
+    public appDef() {
+        return this._appDef;
+    }
+
+    public modelDef() {
+        return this._modelDef;
+    }
+
     /** Loads the tasks, templates, models and definitions for the current application  */
-    public load() {
+    public load(): Promise<any> {
         var returnValue: Promise<any>;
 
         try {
             var appPkgId = path.join(this.workingDir, "package.json");
-            var appPkg = require(appPkgId);
-            var installedModules = appPkg.config.greenmouse.packages;
+            var appPkg = this.tryGetModule(appPkgId);
 
-            console.log("installed modules:");
-            console.log(installedModules);
+            if (appPkg && appPkg.config && appPkg.config.greenmouse && appPkg.config.greenmouse.packages) {
+                this.installedModules = appPkg.config.greenmouse.packages;
+            }
 
-            console.log("loading model...");
-            this._modelDef = this.buildJson(installedModules, this.workingDir, "model");
+            this._modelDef = this.buildJson(this.installedModules, this.workingDir, "model");
+            this._appDef = this.buildJson(this.installedModules, this.workingDir, "app");
 
-            console.log("loading app def...");
-            this._appDef = this.buildJson(installedModules, this.workingDir, "app");
-
-            console.log("merging data...");
             // merge with main model def
             var mainModelDefModuleId = path.join(this.workingDir, "model.json");
             var mainModelDef = this.tryGetModule(mainModelDefModuleId);
@@ -236,23 +270,19 @@ export class Builder {
             if (mainAppDef)
                 this._appDef = Obj.extend(this._appDef, mainAppDef);
 
-            console.log("validating schema...");
             // validate app def against model definition
             var schemaErrors = this.getSchemaErrors(this._appDef, this._modelDef);
-            if (!schemaErrors) {
-
-                console.log("loading tasks...");
-                // Load tasks...
-                this.loadBuildTasks(installedModules, this.workingDir);
-
-                console.log("loading templates...");
-                // load templates
-                returnValue = this._templateManager.getTemplates(installedModules, this.workingDir)
-                    .then(x=> this._templateManager.addTemplates(x));
-            }
-            else {
+            if (schemaErrors != null) {
                 var error = new Error(util.format("Error validating app schema\nErrors:%s", schemaErrors));
                 returnValue = Promise.reject(error);
+            }
+            else {
+                // Load tasks...
+                this.loadBuildTasks(this.installedModules, this.workingDir);
+
+                // load templates
+                returnValue = this._templateManager.getTemplates(this.installedModules, this.workingDir)
+                    .then(x=> this._templateManager.addTemplates(x));
             }
         }
         catch (err) {

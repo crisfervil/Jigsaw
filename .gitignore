@@ -42,11 +42,11 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-node_modules
+/node_modules
 typings/
 !typings/custom.d.ts
 *.js
-!/templates/*.js
 *.js.map
 # imdone tasks
 .imdone/
+.vscode/

@@ -1,0 +1,10 @@
+{
+  "config": {
+    "greenmouse": {
+      "packages": [
+        "m1",
+        "m2"
+      ]
+    }
+  }
+}

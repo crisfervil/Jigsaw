@@ -9,13 +9,13 @@ var cmdLineArgs = process.argv;
 var builder = new Builder(process.cwd());
 
 function showHelp() {
-    console.log("USE: gm install")
-    console.log("Installs the module definition into the current app")
+    console.log("USE: gm build")
+    console.log("Builds the current project")
     console.log("USE: gm show")
     console.log("Loads the defined modules, puts together all the definitions and validates the results. Also shows all loades tasks and templates.")
 }
 
-function install() {
+function build() {
     builder.load() // Load and then build
         .then(() => {
             console.log("Running build tasks and templates...");
@@ -47,8 +47,8 @@ function wrongParameters() {
 if (cmdLineArgs.length > 1) {
     var command = cmdLineArgs[2];
     switch (command) {
-        case "install":
-            install();
+        case "build":
+            build();
             break;
         case "show":
             show();

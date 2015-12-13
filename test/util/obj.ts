@@ -6,7 +6,6 @@ import {Obj} from "../../util/obj";
 describe('util', function() {
   describe("obj", function() {
     describe('clone', function() {
-
       it('should clone an object', function() {
 
         var obj1 = { prop1: "value1" };
@@ -15,7 +14,6 @@ describe('util', function() {
         assert.notEqual(obj2, obj1);
         assert.equal(obj2.prop1, obj1.prop1);
       });
-
     });
 
     describe('extend', function() {
