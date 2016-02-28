@@ -1,5 +1,5 @@
 /// <reference path="../../typings/tsd.d.ts" />
-import {task, TaskSet, TaskExecutionContext} from "../../core/tasks"
+import {task, TaskManager, TaskSet, TaskExecutionContext} from "../../core/tasks"
 import assert = require("assert");
 
 
@@ -12,8 +12,18 @@ class MySetOfTasks extends TaskSet {
 
 describe('core', function() {
   describe("tasks", function() {
+    describe('task manager',function(){
+
+      it('runs by selector',function(done){
+        var tm = new TaskManager();
+        var task1OK=false;
+        tm.add("myTask1","mySelector",x=>task1OK=true);
+        tm.add("myTask2","mySelector",x=>{if(task1OK===true)done()});
+        tm.runBySelector("mySelector",new TaskExecutionContext());
+      });
+    });
     describe('task decorator', function() {
-      it('add task metadata', function() {
+      it('adds task metadata', function() {
 
         var t = new MySetOfTasks();
         assert.ok(t.$taskDefinitions);

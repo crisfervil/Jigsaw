@@ -67,7 +67,7 @@ export class Builder {
         if (taskModule instanceof TaskSet) {
             this.loadTaskSet(taskModule, moduleName);
         }
-        else if (typeof taskModule == "object") {
+        else if (typeof taskModule == "object") { // loading tasks from a module
             for (var propName in taskModule) {
                 var propValue = taskModule[propName];
                 if (typeof propValue === "function") {
@@ -95,12 +95,12 @@ export class Builder {
   	/**
   	* Builds the current object and returns a Promise
   	*/
-    private buildObject(context: TaskExecutionContext): Promise<TaskExecutionContext> {
+    public buildObject(context: TaskExecutionContext): Promise<TaskExecutionContext> {
         // the default return value will be a resolved promise
         var returnValue: Promise<TaskExecutionContext> = Promise.resolve(context);
 
         // Run the task with the specified item path
-        var tasks = this._taskManager.get(context.currentItemPath);
+        var tasks = this._taskManager.getBySelector(context.currentItemPath);
         if (tasks) {
             returnValue = this._taskManager.runAll(tasks, context)
                 .then(() => this._templateManager.runTemplateOnContext(context))
@@ -227,16 +227,20 @@ export class Builder {
         console.log(error);
     }
 
-    public templateManager() {
+    get templateManager() {
         return this._templateManager;
     }
 
-    public taskManager() {
+    get taskManager() {
         return this._taskManager;
     }
 
-    public appDef() {
+    get appDef() {
         return this._appDef;
+    }
+
+    set appDef(value) {
+        this._appDef=value;
     }
 
     public modelDef() {
@@ -293,20 +297,20 @@ export class Builder {
     }
 
     public build() {
-
         var returnValue: Promise<any>;
 
-        // begin building the app
+        // prepare the first execution context
         var context: TaskExecutionContext = {
             appDef: this._appDef, currentItem: this._appDef, currentItemPath: "app",
             modelDef: this._modelDef, workingDir: this.workingDir
         };
-        returnValue = this._taskManager.run("before-build", context) // Run the before build tasks
+        // begin building the app
+        returnValue = this._taskManager.runBySelector("before-build", context) // Run the before build tasks
             .then(() => this.buildObject(context)) // Navigate the objects in the appDef and execute templates and tasks for each item
-            .then(() => this._taskManager.run("after-build", context)) // Run after build tasks
+            .then(() => this._taskManager.runBySelector("after-build", context)) // Run after build tasks
             .then(() => this.validateAppDef(context.appDef, context.modelDef)) // Validate changes in the appDef
             .then(() => this.saveAppDef(context)) // Persist the appDef
-            .then(() => this.saveModelDef(context)) // Persist the modelDeg
+            .then(() => this.saveModelDef(context)) // Persist the modelDef
             .catch(this.handleError);
 
         return returnValue;

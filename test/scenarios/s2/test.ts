@@ -16,35 +16,41 @@ describe("Integration tests",function(){
 
                         //validates the results of the app def merging
                         var appDef = builder.appDef();
-                        assert.ok(appDef!=null);
-                        assert.ok(builder.modelDef()!=null);
-                        assert.equal(appDef.property1,"value1-updated-updated");
-                        assert.equal(appDef.property2,12);
-                        assert.deepEqual(appDef.property3,["abc",123,"456",789,555]);
-                        assert.equal(appDef.property4["property4.1"],"value4.1");
-                        assert.equal(appDef.property4["property4.2"],"value4.2");
-                        assert.equal(appDef.property5.length,3);
-                        assert.equal(appDef.property5[2].a1,"value3");
-                        //assert.notEqual(appDef.property6,undefined);
+                        var expectedAppDef = {
+                          "property1":"value1-updated-updated",
+                          "property2":12,
+                          "property3":["abc",123,"456",789,555],
+                          "property4":{
+                            "property4.1":"value4.1",
+                            "property4.2":"value4.2"
+                          },
+                          "property5":[{"a1":"value1"},{"a1":"value2"},{"a1":"value3"}],
+                          //"property6":null
+                        };
+
+                        assert.deepEqual(expectedAppDef,appDef);
+
 
                         // validate the taks loading
-                        assert.equal(builder.taskManager().tasks().length,2);
-                        assert.equal(builder.taskManager().tasks()[0].id,"m1\\MyBuildTasks\\app");
-                        assert.equal(builder.taskManager().tasks()[0].action(new TaskExecutionContext()),"test1");
+                        assert.equal(builder.taskManager.tasks().length,2);
+                        assert.equal(builder.taskManager.tasks()[0].id,"m1\\MyBuildTasks\\MyAppTask");
+                        assert.equal(builder.taskManager.tasks()[0].selector,"app");
+                        assert.equal(builder.taskManager.tasks()[0].action(new TaskExecutionContext()),"test1");
 
-                        assert.equal(builder.taskManager().tasks()[1].id,"m2\\MyBuildTasksInModule2\\myTask");
-                        assert.equal(builder.taskManager().tasks()[1].action(new TaskExecutionContext()),"test2");
+                        assert.equal(builder.taskManager.tasks()[1].id,"m2\\MyBuildTasksInModule2\\myTask");
+                        assert.equal(builder.taskManager.tasks()[1].selector,"mySelector");
+                        assert.equal(builder.taskManager.tasks()[1].action(new TaskExecutionContext()),"test2");
 
                         // validate templates
-                        assert.ok(builder.templateManager().templates());
-                        assert.equal(builder.templateManager().templates().length,2);
-                        assert.equal(builder.templateManager().templates()[0].module,"m1");
-                        assert.equal(builder.templateManager().templates()[0].id,"template1");
-                        assert.equal(builder.templateManager().templates()[0].path,"templates\\template1.js");
+                        assert.ok(builder.templateManager.templates());
+                        assert.equal(builder.templateManager.templates().length,2);
+                        assert.equal(builder.templateManager.templates()[0].module,"m1");
+                        assert.equal(builder.templateManager.templates()[0].id,"template1");
+                        assert.equal(builder.templateManager.templates()[0].path,"templates\\template1.js");
 
-                        assert.equal(builder.templateManager().templates()[1].module,"m2");
-                        assert.equal(builder.templateManager().templates()[1].id,"template1");
-                        assert.equal(builder.templateManager().templates()[1].path,"templates\\template1.js");
+                        assert.equal(builder.templateManager.templates()[1].module,"m2");
+                        assert.equal(builder.templateManager.templates()[1].id,"template1");
+                        assert.equal(builder.templateManager.templates()[1].path,"templates\\template1.js");
 
 
                         done(); })

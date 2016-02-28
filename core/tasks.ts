@@ -43,26 +43,40 @@ export class TaskManager {
         this._tasks.push(newTask);
     }
 
-    public tasks() {
+    public tasks():Task[] {
         return this._tasks;
     }
 
-    public get(id:string):Array<Task> {
-        var task:Array<Task> = [];
+    public get(id:string):Task[] {
+        var foundTasks = new Array<Task>();
 
         for (var index = 0; index < this._tasks.length; index++) {
             var current = this._tasks[index];
             if (current.id == id) {
-                task.push(current);
+                foundTasks.push(current);
             }
         }
-        return task;
+        return foundTasks;
     }
 
-    public run(id:string, context:TaskExecutionContext) {
-        var tasks = this.get(id);
+    public getBySelector(selector:string):Task[] {
+        var foundTasks = new Array<Task>();
+
+        for (var index = 0; index < this._tasks.length; index++) {
+            var current = this._tasks[index];
+            if (current.selector == selector) {
+                // TODO:Evaluate expressions in selector
+                foundTasks.push(current);
+            }
+        }
+        return foundTasks;
+    }
+
+
+    public runBySelector(selector:string, context:TaskExecutionContext) {
+        var tasks = this.getBySelector(selector);
         if (tasks.length == 0) {
-            console.log("Warning: No tasks found with id: %s", id);
+            console.log("Warning: No tasks found with id: %s", selector);
         }
         return this.runAll(tasks, context);
     }
@@ -72,13 +86,13 @@ export class TaskManager {
         for (var i = 0; i < tasks.length; i++) {
             var task = tasks[i];
             // This runs all the tasks in parallel
-            var p = this._run(task, context);
+            var p = this.runTask(task, context);
             promises.push(p);
         }
         return Promise.all(promises).then<TaskExecutionContext>(x=>context);
     }
 
-    private _run(task:Task, context:TaskExecutionContext) {
+    private runTask(task:Task, context:TaskExecutionContext) {
         return new Promise<TaskExecutionContext>((resolve, reject)=> {
             console.log("Running task %s...", task.id);
             try {
