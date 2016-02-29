@@ -6,7 +6,7 @@ The main difference with others DSL frameworks is that this is an **Extensible**
 # How to start
 The best way to start working with Jigsaw is installing a module that contains a language definition and start playing around.
 
-Install for example the [mean](https://github.com/crisfervil/Jigsaw-mean) module, that allows you to create a MEAN based application.
+Install for example the [MEAN module](https://github.com/crisfervil/Jigsaw-mean), that allows you to create a MEAN based application.
 
 First, create a directory to store your application
 ```
@@ -23,7 +23,7 @@ Install Jigsaw
 $ npm install -g jigs
 ```
 
-Install the mean package. This will install also the required components.
+Install the MEAN module. This will install also the required components.
 ```
 $ jigs install jigsaw-mean
 ```
@@ -44,7 +44,7 @@ TBC
 ## Application definition
 TBC
 
-## Tasks
+## Build Tasks
 TBC
 
 ## Templates
