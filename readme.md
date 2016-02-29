@@ -1,66 +1,76 @@
 # Project description
-Green Mouse is an extensible DSL framework to build any type of applications
+Extensible [DSL](https://en.wikipedia.org/wiki/Domain-specific_language) framework to build any type of applications.
 
-# Install steps
-(This should get simpler after publishing in npm)
+The main difference with others DSL frameworks is that this is an **Extensible** DSL.
 
-Avoid 1 to 5 if you already have those tools installed
+# How to start
+The best way to start working with Jigsaw is installing a module that contains an application definition and start playing around.
 
-1 - Install node js: https://nodejs.org
+Install for example the [mean](https://github.com/crisfervil/Jigsaw-mean) module, that allows you to create a MEAN based application.
 
-2 - Install git : https://desktop.github.com/
+First, create a directory to store your application
+```
+$ mkdir myapp
+```
 
-3 - Open a command prompt
+Then cd into it
+```
+$ cd myapp
+```
 
-4 - Install Type script compiler (https://github.com/Microsoft/TypeScript)
+Install Jigsaw
 ```
-$ npm install tsc -g
+$ npm install -g jigs
 ```
-5 - Install Definitely typed (http://definitelytyped.org)
+
+Install the mean package. This will install also the required components.
 ```
-$ npm install tsd -g
+$ jigs install jigsaw-mean
 ```
-6 - Clone Green Mouse
+Then start the application
 ```
-$ git clone https://github.com/crisfervil/GreenMouse.git greenmouse
+$ jigs start
 ```
-7 - Move to GreenMouse dir
+
+# Basic concepts
+
+General Description TBC.
+
+Following, the main components of Jigsaw explained:
+
+## Application model
+TBC
+
+## Application definition
+TBC
+
+## Tasks
+TBC
+
+## Templates
+TBC
+
+
+# Jigsaw commands
+Install
 ```
-$ cd greenmouse
+$ jigs install package-name
 ```
-8 - Install definitely typed typings
+
+Build
 ```
-$ tsd install
+$ jigs build
 ```
-9 - Compile Green Mouse
+
+Start
 ```
-$ tsc -p .
+$ jigs start
 ```
-10 - Link greenmouse (https://docs.npmjs.com/cli/link)
-```
-$ npm link
-```
-11- Move one dir up
-```
-$ cd ..
-```
-12 - Clone Green Mouse sample app
-```
-$ git clone https://github.com/crisfervil/GreenMouse.git greenmouse-app
-```
-13 - Move to the sample app dir
-```
-$ cd greenmouse-app
-```
-14 - Link the the sample app with the module
-```
-$ npm link greenmouse
-```
-15 - Install app dependencies
-```
-$ npm install
-```
-16 - Run Green Mouse installer
-```
-$ gm install
-```
+
+
+# Requirements
+Requires [Node.js](nodejs.org)
+
+
+# Backlog
+TBC
