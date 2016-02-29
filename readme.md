@@ -4,7 +4,7 @@ Extensible [DSL](https://en.wikipedia.org/wiki/Domain-specific_language) framewo
 The main difference with others DSL frameworks is that this is an **Extensible** DSL.
 
 # How to start
-The best way to start working with Jigsaw is installing a module that contains an application definition and start playing around.
+The best way to start working with Jigsaw is installing a module that contains a language definition and start playing around.
 
 Install for example the [mean](https://github.com/crisfervil/Jigsaw-mean) module, that allows you to create a MEAN based application.
 
