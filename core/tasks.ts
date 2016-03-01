@@ -94,7 +94,7 @@ export class TaskManager {
 
     private runTask(task:Task, context:TaskExecutionContext) {
         return new Promise<TaskExecutionContext>((resolve, reject)=> {
-            console.log("Running task %s...", task.id);
+            //console.log("Running task %s...", task.id);
             try {
                 var retVal = task.action.call(this, context);
                 if (retVal && retVal instanceof Promise) {
@@ -103,7 +103,7 @@ export class TaskManager {
                     var returnedPromise:Promise<any> = retVal;
                     returnedPromise
                         .then(()=> {
-                            console.log("done!");
+                            //console.log("done!");
                             resolve(context);
                         })
                         .catch(err=> {
@@ -115,7 +115,7 @@ export class TaskManager {
                 else {
                     // If the task returns nothing or any other value
                     // means that is a sync task, so we can resolve it immediately
-                    console.log("done!");
+                    //console.log("done!");
                     resolve(context);
                 }
             }

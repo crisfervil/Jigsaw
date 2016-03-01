@@ -11,11 +11,10 @@ describe("Integration tests",function(){
         var builder = new Builder(__dirname);
         builder.load()
             .then(()=>{
-                        assert.ok(builder.installedModules);
                         assert.deepEqual(builder.installedModules, ["m1","m2"]);
 
                         //validates the results of the app def merging
-                        var appDef = builder.appDef();
+                        var appDef = builder.appDef;
                         var expectedAppDef = {
                           "property1":"value1-updated-updated",
                           "property2":12,
@@ -31,7 +30,7 @@ describe("Integration tests",function(){
                         assert.deepEqual(expectedAppDef,appDef);
 
 
-                        // validate the taks loading
+                        // validate the taks
                         assert.equal(builder.taskManager.tasks().length,2);
                         assert.equal(builder.taskManager.tasks()[0].id,"m1\\MyBuildTasks\\MyAppTask");
                         assert.equal(builder.taskManager.tasks()[0].selector,"app");

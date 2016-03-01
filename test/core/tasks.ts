@@ -6,7 +6,7 @@ import assert = require("assert");
 class MySetOfTasks extends TaskSet {
   @task("testSelector")
   testTask(context:TaskExecutionContext){
-    console.log("installing webapp...");
+    //console.log("installing webapp...");
   }
 }
 

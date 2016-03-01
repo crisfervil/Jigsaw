@@ -50,3 +50,7 @@ typings/
 # imdone tasks
 .imdone/
 .vscode/
+
+# Include Test templates
+!test/scenarios/s2/node_modules/m1/templates/**
+!test/scenarios/s2/node_modules/m2/templates/**

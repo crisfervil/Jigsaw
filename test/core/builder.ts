@@ -10,7 +10,7 @@ describe('core', function() {
 
       var appDef = {myobject:{myprop:"value"}}
       b.appDef = appDef;
-      b.taskManager.add("myrootTask","root",x=>{console.log(x);done()});
+      b.taskManager.add("myrootTask","root",x=>{/*console.log(x);*/done()});
 
       var context = new TaskExecutionContext();
       context.currentItemPath = "root";
