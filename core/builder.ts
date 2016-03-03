@@ -286,7 +286,7 @@ export class Builder {
 
                 // load templates
                 returnValue = this._templateManager.getTemplates(this.installedModules, this.workingDir)
-                    .then(x=> this._templateManager.addTemplates(x));
+                    .then(x=> this._templateManager.addRange(x));
             }
         }
         catch (err) {

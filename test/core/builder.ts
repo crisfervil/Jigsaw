@@ -18,5 +18,21 @@ describe('core', function() {
       b.buildObject(context);
 
     });
+
+/*
+    it('runs a template',function(done){
+      var b = new Builder(process.cwd());
+
+      var appDef = {myobject:{myprop:"value"}}
+      b.appDef = appDef;
+      b.templateManager.add({});
+
+      var context = new TaskExecutionContext();
+      context.currentItemPath = "root";
+      context.currentItem = appDef;
+      b.buildObject(context);
+
+    });*/
+
   });
 });

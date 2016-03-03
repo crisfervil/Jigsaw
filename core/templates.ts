@@ -14,7 +14,8 @@ export class Template {
     module:string;
     content:string;
     item:{path:string,criteria:string};
-    output:string;
+    selector:string;
+    outputPath:string;
 }
 
 export class TemplateExecutionContext {
@@ -25,23 +26,70 @@ export class TemplateExecutionContext {
     workingDir:string;
 }
 
+export interface TemplateRunner {
+  runTemplate(Template,TemplateExecutionContext):Promise<void>;
+}
+
+export class EJSTemplateRunner implements TemplateRunner {
+  public runTemplate(template:Template, context:TemplateExecutionContext) {
+      return new Promise<void>((resolve, reject)=> {
+
+        // render the template using ejs
+        // TODO: Allow other template engines
+        console.log("running template %s for %s...", template.id, context.currentItemPath);
+        var templateContext:any = context; // used just to convert to the appropriate type
+        var result = ejs.render(template.content, templateContext);
+
+        var resultOutputPath= ejs.render(template.outputPath, templateContext);
+
+        if (resultOutputPath) {
+            if (!path.isAbsolute(resultOutputPath)) {
+                // TODO: Change the working dir for the output dir
+                resultOutputPath = path.join(context.workingDir, resultOutputPath);
+            }
+            fs.mkdirP(path.dirname(resultOutputPath), error=> {
+                if (!error){
+                    fs.writeFile(result, resultOutputPath)
+                        .then(()=>resolve())
+                        .catch(reject);
+                }
+                else{
+                  reject(error);
+                }
+            });
+        }
+        else {
+            var error = util.format("No output path found for template: %s", template.id);
+            reject(error);
+        }
+      });
+  }
+}
+
 export class TemplateManager {
 
     private _templates = new Array<Template>();
+    private _templateRunner:TemplateRunner;
+
+    constructor(templateRuner?:TemplateRunner){
+      if(templateRuner!==undefined){
+        this._templateRunner=templateRuner;
+      }
+    }
 
     public templates() {
         return this._templates;
     }
 
-    public addTemplate(template:Template) {
+    public add(template:Template) {
         this._templates.push(template);
     }
 
-    public addTemplates(templates:Template[]) {
+    public addRange(templates:Template[]) {
         templates.forEach(x=>this._templates.push(x));
     }
 
-    public getTemplate(id:string):Template {
+    public getById(id:string):Template {
         var template:Template = null;
         for (var i = 0; i < this._templates.length; i++) {
             var currentTemplate = this._templates[i];
@@ -67,8 +115,8 @@ export class TemplateManager {
       if(templateLines.length>0){
         template.item = this.getItemFromTemplate(templateLines[0]);
         if(!template.item) template.item = this.getItemFromTemplate(templateLines[1]);
-        template.output = this.getOutputFromTemplate(templateLines[0]);
-        if(!template.output) template.output = this.getOutputFromTemplate(templateLines[1]);
+        template.outputPath = this.getOutputFromTemplate(templateLines[0]);
+        if(!template.outputPath) template.outputPath = this.getOutputFromTemplate(templateLines[1]);
       }
     }
 
@@ -204,7 +252,7 @@ export class TemplateManager {
               matches = this.matchesTemplateCriteria(currentTemplate.item.criteria, context);
           }
           if(!currentTemplate.item.criteria||matches){
-            var curPromise = this._runTemplate(currentTemplate,context);
+            var curPromise = this._templateRunner.runTemplate(currentTemplate,context);
             promises.push(curPromise);
           }
         }
@@ -214,52 +262,16 @@ export class TemplateManager {
       return returnValue;
     }
 
-    private _runTemplate(template:Template, context:TemplateExecutionContext) {
-        return new Promise<void>((resolve, reject)=> {
-
-          // render the template using ejs
-          // TODO: Allow other template engines
-          console.log("running template %s for %s...", template.id, context.currentItemPath);
-          var templateContext:any = context; // used just to convert to the appropriate type
-          var result = ejs.render(template.content, templateContext);
-
-          var resultOutputPath= ejs.render(template.output, templateContext);
-
-          if (resultOutputPath) {
-              if (!path.isAbsolute(resultOutputPath)) {
-                  // TODO: Change the working dir for the output dir
-                  resultOutputPath = path.join(context.workingDir, resultOutputPath);
-              }
-              fs.mkdirP(path.dirname(resultOutputPath), error=> {
-                  if (!error){
-                      fs.writeFile(result, resultOutputPath)
-                          .then(()=>resolve())
-                          .catch(reject);
-                  }
-                  else{
-                    reject(error);
-                  }
-              });
-          }
-          else {
-              var error = util.format("No output path found for template: %s", template.id);
-              reject(error);
-          }
-
-
-        });
-    }
-
     public runTemplate(id:string, context:TemplateExecutionContext) {
-        var template = this.getTemplate(id);
+        var template = this.getById(id);
         if (!template) throw  new Error(util.format("Template %s not found", id));
-        return this._runTemplate(template, context);
+        return this._templateRunner.runTemplate(template, context);
     }
 
     public runTemplateIfExist(id:string, context:TemplateExecutionContext) {
-        var template = this.getTemplate(id);
+        var template = this.getById(id);
         if (template)
-            return this._runTemplate(template, context);
+            return this._templateRunner.runTemplate(template, context);
     }
 
 }
