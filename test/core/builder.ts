@@ -5,18 +5,73 @@ import assert = require("assert");
 
 describe('core', function() {
   describe("builder", function() {
-    it('builds an object',function(done){
+    it('executes a task for the root object',function(done){
       var b = new Builder(process.cwd());
 
+      var executed = false;
       var appDef = {myobject:{myprop:"value"}}
       b.appDef = appDef;
-      b.taskManager.add("myrootTask","root",x=>{/*console.log(x);*/done()});
+      b.taskManager.add("myrootTask","root",x=>{executed=true});
 
       var context = new TaskExecutionContext();
       context.currentItemPath = "root";
       context.currentItem = appDef;
-      b.buildObject(context);
+      b.buildObject(context).then(x=>{
+          assert.equal(true,executed,"The task wasnt executed :(");
+          done();
+      });
+    });
 
+    it('executes a task for a sub object',function(done){
+      var b = new Builder(process.cwd());
+
+      var executed = true;
+      var appDef = {myobject:{myprop:{anotherProp:"value"}}}
+      b.appDef = appDef;
+      b.taskManager.add("myrootTask","root/myobject/myprop",x=>{executed=true});
+
+      var context = new TaskExecutionContext();
+      context.currentItemPath = "root";
+      context.currentItem = appDef;
+      b.buildObject(context).then(x=>{
+          assert.equal(true,executed,"The task wasnt executed :(");
+          done();
+      });
+    });
+
+    it('executes a task for an array item',function(done){
+      var b = new Builder(process.cwd());
+
+      var executed=false;
+      var appDef = {myobject:{myprop:{anotherProp:[{prop:"value1"},{prop:"value1"},{prop:"value1"}]}}}
+      b.appDef = appDef;
+      b.taskManager.add("myrootTask","root/myobject/myprop/anotherProp[1]",x=>{executed=true});
+
+      var context = new TaskExecutionContext();
+      context.currentItemPath = "root";
+      context.currentItem = appDef;
+      b.buildObject(context).then(x=>{
+          assert.equal(true,executed,"The task wasnt executed :(");
+          done();
+      });
+    });
+
+    it('It doesnt runs an unexpected task',function(done){
+      var b = new Builder(process.cwd());
+
+      var executed = false;
+      var appDef = {myobject:{myprop:{anotherProp:"value"}}}
+      b.appDef = appDef;
+      b.taskManager.add("myrootTask","root/xxxx/myprop",x=>{executed=true;});
+
+      var context = new TaskExecutionContext();
+      context.currentItemPath = "root";
+      context.currentItem = appDef;
+
+      b.buildObject(context).then(x=>{
+          assert.equal(false,executed,"The task was executed :(");
+          done();
+      });
     });
 
 /*

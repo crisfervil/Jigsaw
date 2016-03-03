@@ -2,6 +2,8 @@
 /// <reference path="../typings/custom.d.ts" />
 
 import {fs} from "../util/fs";
+import {JsonPath} from "./jsonPath";
+
 import path = require("path");
 import util = require("util");
 
@@ -59,22 +61,25 @@ export class TaskManager {
         return foundTasks;
     }
 
-    public getBySelector(selector:string):Task[] {
+    public getByContext(itemPath:string,rootObject,currentObject):Task[] {
         var foundTasks = new Array<Task>();
 
         for (var index = 0; index < this._tasks.length; index++) {
-            var current = this._tasks[index];
-            if (current.selector == selector) {
-                // TODO:Evaluate expressions in selector
-                foundTasks.push(current);
+            var currentTask = this._tasks[index];
+            if (JsonPath.areEqual(currentTask.selector,itemPath)) {
+                var found = JsonPath.find(currentTask.selector,rootObject);
+                if(found==currentObject){
+                  foundTasks.push(currentTask);
+                }
             }
         }
-        return foundTasks;
+        // If there are not values, return null instead of an empty array
+        return foundTasks.length>0?foundTasks:null;
     }
 
 
     public runBySelector(selector:string, context:TaskExecutionContext) {
-        var tasks = this.getBySelector(selector);
+        var tasks = this.getByContext(selector,context.appDef,context.currentItem);
         if (tasks.length == 0) {
             console.log("Warning: No tasks found with id: %s", selector);
         }

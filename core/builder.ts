@@ -100,17 +100,20 @@ export class Builder {
         var returnValue: Promise<TaskExecutionContext> = Promise.resolve(context);
 
         // Run the task with the specified item path
-        var tasks = this._taskManager.getBySelector(context.currentItemPath);
+        var tasks = this._taskManager.getByContext(context.currentItemPath,context.appDef,context.currentItem);
         if (tasks) {
             returnValue = this._taskManager.runAll(tasks, context)
-                .then(() => this._templateManager.runTemplateOnContext(context))
-                .then(() => this.buildProperty(context));
+                .then(() =>
+                          this._templateManager.runTemplateOnContext(context))
+                .then(() =>
+                          this.buildProperty(context));
         }
         else {
             // There aren't any tasks for defined fot the specified item
             // so, we run the tasks for the inner objects
             returnValue = this._templateManager.runTemplateOnContext(context)
-                .then(() => this.buildProperty(context));
+                .then(() =>
+                          this.buildProperty(context));
         }
         return returnValue;
     }
@@ -141,7 +144,7 @@ export class Builder {
                     var arrayProp: Array<any> = propValue;
                     // Copy the context, so later calls doesn't change it
                     var context2 = Obj.clone(context);
-                    context2.currentItemPath = path.join(currentPropPath, "item").replace(/\\/g, "/");;
+                    context2.currentItemPath = path.join(currentPropPath, "[]").replace(/\\/g, "/");;
                     // if the property is an array, build it as an array
                     returnValue = this.buildArray(context2, arrayProp, 0)
                         .then(() => this.buildProperty(context, properties, currentPropertyIndex + 1)); // then, build the next property

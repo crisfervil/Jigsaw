@@ -4,14 +4,14 @@ export class Obj{
 
 	public static clone(obj) {
 		if (null == obj || "object" != typeof obj) return obj;
-		var copy = obj.constructor();
+		var copy = {};
 		for (var attr in obj) {
 			if (obj.hasOwnProperty(attr)) copy[attr] = obj[attr];
 		}
 		return copy;
 	}
 
-	
+
 	/**
 	 * Merges two objects. Copies all the properties of object2 in object1
 	 */
@@ -56,7 +56,7 @@ export class Obj{
 								else{
 									// merge two non array obects
 									object1[propName] = this.extend(obj1PropValue, obj2PropValue);
-								}							
+								}
 							}
 						}
 						else {
@@ -66,7 +66,7 @@ export class Obj{
 				}
 			}
 		}
-		
+
 		return object1;
 	}
 }
