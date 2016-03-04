@@ -56,6 +56,16 @@ describe('core', function() {
 
         assert.deepEqual(found, null, JSON.stringify(found));
       });
+      it('query the root object',function(){
+
+        var obj = {prop1:{prop2:{prop3:{prop4:{value:"test"}}}}};
+
+        var query = "/";
+        var found = JsonPath.find(obj,query);
+
+        assert.deepEqual(found, obj, JSON.stringify(found));
+
+      });
       it('simple query',function(){
 
         var obj = {prop1:{prop2:{prop3:{prop4:{value:"test"}}}}};
@@ -66,11 +76,11 @@ describe('core', function() {
         assert.deepEqual(found, obj.prop1.prop2.prop3.prop4, JSON.stringify(found));
 
       });
-      it('query ending in slash',function(){
+      it('query starting and ending with slash',function(){
 
         var obj = {prop1:{prop2:{prop3:{prop4:{value:"test"}}}}};
 
-        var query = "prop1/prop2/prop3/prop4/";
+        var query = "/prop1/prop2/prop3/prop4/";
         var found = JsonPath.find(obj,query);
 
         assert.deepEqual(found, obj.prop1.prop2.prop3.prop4, JSON.stringify(found));

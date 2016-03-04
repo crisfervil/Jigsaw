@@ -42,6 +42,7 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
+coverage/
 /node_modules
 typings/
 !typings/custom.d.ts
@@ -50,6 +51,7 @@ typings/
 # imdone tasks
 .imdone/
 .vscode/
+npm-debug.log
 
 # Include Test templates
 !test/scenarios/s2/node_modules/m1/templates/**

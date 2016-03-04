@@ -11,10 +11,10 @@ describe('core', function() {
       var executed = false;
       var appDef = {myobject:{myprop:"value"}}
       b.appDef = appDef;
-      b.taskManager.add("myrootTask","root",x=>{executed=true});
+      b.taskManager.add("myrootTask","/",x=>{executed=true});
 
       var context = new TaskExecutionContext();
-      context.currentItemPath = "root";
+      context.currentItemPath = "/";
       context.currentItem = appDef;
       b.buildObject(context).then(x=>{
           assert.equal(true,executed,"The task wasnt executed :(");
@@ -28,10 +28,10 @@ describe('core', function() {
       var executed = true;
       var appDef = {myobject:{myprop:{anotherProp:"value"}}}
       b.appDef = appDef;
-      b.taskManager.add("myrootTask","root/myobject/myprop",x=>{executed=true});
+      b.taskManager.add("myTask","/myobject/myprop",x=>{executed=true});
 
       var context = new TaskExecutionContext();
-      context.currentItemPath = "root";
+      context.currentItemPath = "/";
       context.currentItem = appDef;
       b.buildObject(context).then(x=>{
           assert.equal(true,executed,"The task wasnt executed :(");
@@ -45,10 +45,10 @@ describe('core', function() {
       var executed=false;
       var appDef = {myobject:{myprop:{anotherProp:[{prop:"value1"},{prop:"value1"},{prop:"value1"}]}}}
       b.appDef = appDef;
-      b.taskManager.add("myrootTask","root/myobject/myprop/anotherProp[1]",x=>{executed=true});
+      b.taskManager.add("myTask","myobject/myprop/anotherProp[1]",x=>{executed=true});
 
       var context = new TaskExecutionContext();
-      context.currentItemPath = "root";
+      context.currentItemPath = "/";
       context.currentItem = appDef;
       b.buildObject(context).then(x=>{
           assert.equal(true,executed,"The task wasnt executed :(");
@@ -62,10 +62,10 @@ describe('core', function() {
       var executed = false;
       var appDef = {myobject:{myprop:{anotherProp:"value"}}}
       b.appDef = appDef;
-      b.taskManager.add("myrootTask","root/xxxx/myprop",x=>{executed=true;});
+      b.taskManager.add("myTask","/xxxx/myprop",x=>{executed=true;});
 
       var context = new TaskExecutionContext();
-      context.currentItemPath = "root";
+      context.currentItemPath = "/";
       context.currentItem = appDef;
 
       b.buildObject(context).then(x=>{

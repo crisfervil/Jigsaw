@@ -68,6 +68,10 @@ export class TaskManager {
             var currentTask = this._tasks[index];
             if (JsonPath.areEqual(currentTask.selector,itemPath)) {
                 var found = JsonPath.find(currentTask.selector,rootObject);
+                console.log("f:");
+                console.log(found);
+                console.log("c:");
+                console.log(currentObject);
                 if(found==currentObject){
                   foundTasks.push(currentTask);
                 }

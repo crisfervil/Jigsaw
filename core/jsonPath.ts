@@ -3,7 +3,7 @@
 export class JsonPath {
 
 
-  private static RE_PATTERN:string = "(\\w+)(\\[(\\d+)])?(\\/)?";
+  private static RE_PATTERN:string = "(\\/)?(\\w+)(\\[(\\d+)])?(\\/)?";
 
   /* returns the path without conditions. Useful to compare two equivalen paths */
   public static areEqual(path1:string,path2:string){
@@ -26,24 +26,29 @@ export class JsonPath {
   public static find(object,query:string){
       var foundObject = null;
       if(object&&query){
-        var re = new RegExp(JsonPath.RE_PATTERN,"g");
-        var m = re.exec(query);
-        if(m&&m.length>0){
-          var fullQueryPart = m[0];
-          if(fullQueryPart) {
-            var propName = m[1];
-            var propIndex = m[3]
+        if(query=="/"){
+            foundObject=object;
+        }
+        else {
+          var re = new RegExp(JsonPath.RE_PATTERN,"g");
+          var m = re.exec(query);
+          if(m&&m.length>0){
+            var fullQueryPart = m[0];
+            if(fullQueryPart) {
+              var propName = m[2];
+              var propIndex = m[4]
 
-            foundObject = object[propName];
-            if(propIndex&&foundObject)
-            {
-              foundObject = foundObject[propIndex];
-            }
+              foundObject = object[propName];
+              if(propIndex&&foundObject)
+              {
+                foundObject = foundObject[propIndex];
+              }
 
-            var remainingQueryStr = query.substr(fullQueryPart.length);
+              var remainingQueryStr = query.substr(fullQueryPart.length);
 
-            if(remainingQueryStr){
-              foundObject = JsonPath.find(foundObject, remainingQueryStr);
+              if(remainingQueryStr){
+                foundObject = JsonPath.find(foundObject, remainingQueryStr);
+              }
             }
           }
         }

@@ -1,20 +1,22 @@
 {
-  "name": "greenmouse",
+  "name": "jigsaw",
   "version": "0.0.1",
-  "description" : "Extensible DSL engine",
+  "description": "Extensible DSL engine",
   "main": "./index.js",
-  "author" : "crisfervil",
+  "author": "crisfervil",
   "bin": {
-  "gm": "bin/run.js"
+    "gm": "bin/run.js"
   },
   "scripts": {
-    "test": "mocha --recursive"
+    "test": "mocha --recursive",
+    "cover": "istanbul cover node_modules\\mocha\\bin\\_mocha -- --recursive"
   },
   "dependencies": {
     "ejs": "^2.3.4",
     "tv4": "^1.2.7"
   },
   "devDependencies": {
-    "mocha": "^2.3.3"
+    "istanbul": "^0.4.2",
+    "mocha": "^2.4.5"
   }
 }
