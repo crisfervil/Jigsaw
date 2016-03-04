@@ -1,6 +1,6 @@
 //#! /usr/bin/env node
 
-/// <reference path="../typings/tsd.d.ts" />
+/// <reference path="../typings/main.d.ts" />
 
 import {Builder} from "../core/builder"
 import path = require("path");

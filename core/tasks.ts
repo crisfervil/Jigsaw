@@ -1,5 +1,4 @@
-/// <reference path="../typings/tsd.d.ts" />
-/// <reference path="../typings/custom.d.ts" />
+/// <reference path="../typings/main.d.ts" />
 
 import {fs} from "../util/fs";
 import {JsonPath} from "./jsonPath";

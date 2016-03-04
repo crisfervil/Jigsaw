@@ -1,4 +1,4 @@
-/// <reference path="../../typings/tsd.d.ts" />
+/// <reference path="../../typings/main.d.ts" />
 import {task, TaskManager, TaskSet, TaskExecutionContext} from "../../core/tasks"
 import assert = require("assert");
 

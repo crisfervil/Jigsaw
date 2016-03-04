@@ -1,4 +1,4 @@
-/// <reference path="../../typings/tsd.d.ts" />
+/// <reference path="../../typings/main.d.ts" />
 import {JsonPath} from "../../core/jsonPath";
 import assert = require("assert");
 
