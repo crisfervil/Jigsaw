@@ -16,6 +16,7 @@ describe('core', function() {
       var context = new TaskExecutionContext();
       context.currentItemPath = "/";
       context.currentItem = appDef;
+      context.appDef = appDef;
       b.buildObject(context).then(x=>{
           assert.equal(true,executed,"The task wasnt executed :(");
           done();
@@ -33,6 +34,7 @@ describe('core', function() {
       var context = new TaskExecutionContext();
       context.currentItemPath = "/";
       context.currentItem = appDef;
+      context.appDef = appDef;
       b.buildObject(context).then(x=>{
           assert.equal(true,executed,"The task wasnt executed :(");
           done();
@@ -50,6 +52,7 @@ describe('core', function() {
       var context = new TaskExecutionContext();
       context.currentItemPath = "/";
       context.currentItem = appDef;
+      context.appDef = appDef;
       b.buildObject(context).then(x=>{
           assert.equal(true,executed,"The task wasnt executed :(");
           done();
@@ -67,6 +70,7 @@ describe('core', function() {
       var context = new TaskExecutionContext();
       context.currentItemPath = "/";
       context.currentItem = appDef;
+      context.appDef = appDef;
 
       b.buildObject(context).then(x=>{
           assert.equal(false,executed,"The task was executed :(");

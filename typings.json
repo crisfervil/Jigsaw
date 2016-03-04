@@ -1,0 +1,7 @@
+{
+  "ambientDependencies": {
+    "node": "github:DefinitelyTyped/DefinitelyTyped/node/node.d.ts#32029fcb4e1a3ef8968711b545d77b584435729d",
+    "es6-promise": "github:DefinitelyTyped/DefinitelyTyped/es6-promise/es6-promise.d.ts#54f064352a3615443f7bff4198078db15e28247b",
+    "mocha": "github:DefinitelyTyped/DefinitelyTyped/mocha/mocha.d.ts#3fc1377ce29dd9670975cb68615edf1b819fc4a5"
+  }
+}
