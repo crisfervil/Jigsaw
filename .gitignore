@@ -44,7 +44,7 @@ Temporary Items
 
 coverage/
 /node_modules
-typings/
+typings/**
 !typings/custom.d.ts
 *.js
 *.js.map
