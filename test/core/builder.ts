@@ -45,9 +45,11 @@ describe('core', function() {
       var b = new Builder(process.cwd());
 
       var executed=false;
-      var appDef = {myobject:{myprop:{anotherProp:[{prop:"value1"},{prop:"value1"},{prop:"value1"}]}}}
+      var appDef = {myobject:{myprop:{anotherProp:[{prop:"value1"},{prop:"value2"},{prop:"value3"}]}}}
       b.appDef = appDef;
-      b.taskManager.add("myTask","myobject/myprop/anotherProp[1]",x=>{executed=true});
+      b.taskManager.add("myTask","myobject/myprop/anotherProp[1]",
+        x=>
+          executed=(x.currentItem.prop=="value2"));
 
       var context = new TaskExecutionContext();
       context.currentItemPath = "/";

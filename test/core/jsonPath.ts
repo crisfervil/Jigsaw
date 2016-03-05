@@ -4,17 +4,45 @@ import assert = require("assert");
 
 describe('core', function() {
   describe("jsonPath", function() {
+
+    describe("removeConditions", function() {
+      it('removes conditions at root',function(){
+        var path1="/root[1345]/";
+        var expectedResult = "/root[]/";
+        var result = JsonPath.removeConditions(path1);
+        assert.equal(expectedResult,result);
+      });
+      it('removes conditions',function(){
+        var path1="root/path1[1]/";
+        var expectedResult = "root/path1[]/";
+        var result = JsonPath.removeConditions(path1);
+        assert.equal(expectedResult,result);
+      });
+      it('removes conditions 2',function(){
+        var path1="/root/path1[1]/path[2]";
+        var expectedResult = "/root/path1[]/path[]";
+        var result = JsonPath.removeConditions(path1);
+        assert.equal(expectedResult,result);
+      });
+      it('skip when there arent conditions',function(){
+        var path1="/root/path1[]";
+        var expectedResult = "/root/path1[]";
+        var result = JsonPath.removeConditions(path1);
+        assert.equal(expectedResult,result);
+      });
+    });
+
     describe("areEqual", function() {
       it('compares null values',function(){
         var path1=null;
         var path2="root/path1/";
-        var result = JsonPath.areEqual(path1,path2);
+        var result = JsonPath.areEquals(path1,path2);
         assert.equal(false,result);
       });
       it('compares two paths',function(){
         var path1="/root/path1";
         var path2="root/path1/";
-        var result = JsonPath.areEqual(path1,path2);
+        var result = JsonPath.areEquals(path1,path2);
         assert.equal(true,result);
       });
     });

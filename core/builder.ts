@@ -144,7 +144,7 @@ export class Builder {
                     var arrayProp: Array<any> = propValue;
                     // Copy the context, so later calls doesn't change it
                     var context2 = Obj.clone(context);
-                    context2.currentItemPath = path.join(currentPropPath, "[]").replace(/\\/g, "/");;
+                    context2.currentItemPath = currentPropPath+"[]";
                     // if the property is an array, build it as an array
                     returnValue = this.buildArray(context2, arrayProp, 0)
                         .then(() => this.buildProperty(context, properties, currentPropertyIndex + 1)); // then, build the next property

@@ -68,8 +68,8 @@ export class TaskManager {
             if(itemPath==currentTask.selector){
               foundTasks.push(currentTask);
             }
-            else if(JsonPath.areEqual(currentTask.selector,itemPath)) {
-                var found = JsonPath.find(currentTask.selector,rootObject);
+            else if(JsonPath.areEquals(currentTask.selector,itemPath)) {
+                var found = JsonPath.find(rootObject,currentTask.selector);
                 if(found==currentObject){
                   foundTasks.push(currentTask);
                 }
