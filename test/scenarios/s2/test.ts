@@ -45,11 +45,11 @@ describe("Integration tests",function(){
                         assert.equal(builder.templateManager.templates().length,2);
                         assert.equal(builder.templateManager.templates()[0].module,"m1");
                         assert.equal(builder.templateManager.templates()[0].id,"template1");
-                        assert.equal(builder.templateManager.templates()[0].path,"templates\\template1.js");
+                        assert.equal(builder.templateManager.templates()[0].path,path.join("templates","template1.js"));
 
                         assert.equal(builder.templateManager.templates()[1].module,"m2");
                         assert.equal(builder.templateManager.templates()[1].id,"template1");
-                        assert.equal(builder.templateManager.templates()[1].path,"templates\\template1.js");
+                        assert.equal(builder.templateManager.templates()[1].path,path.join("templates","template1.js"));
 
 
                         done(); })
