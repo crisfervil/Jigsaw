@@ -32,11 +32,11 @@ describe("Integration tests",function(){
 
                         // validate the taks
                         assert.equal(builder.taskManager.tasks().length,2);
-                        assert.equal(builder.taskManager.tasks()[0].id,"m1\\MyBuildTasks\\MyAppTask");
+                        assert.equal(builder.taskManager.tasks()[0].id,"m1/MyBuildTasks/MyAppTask");
                         assert.equal(builder.taskManager.tasks()[0].selector,"app");
                         assert.equal(builder.taskManager.tasks()[0].action(new TaskExecutionContext()),"test1");
 
-                        assert.equal(builder.taskManager.tasks()[1].id,"m2\\MyBuildTasksInModule2\\myTask");
+                        assert.equal(builder.taskManager.tasks()[1].id,"m2/MyBuildTasksInModule2/myTask");
                         assert.equal(builder.taskManager.tasks()[1].selector,"mySelector");
                         assert.equal(builder.taskManager.tasks()[1].action(new TaskExecutionContext()),"test2");
 

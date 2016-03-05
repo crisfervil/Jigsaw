@@ -57,7 +57,7 @@ export class Builder {
     private loadTaskSet(taskModule: TaskSet, moduleName:string) {
         if (taskModule.$taskDefinitions !== undefined) {
             for (var taskItem of taskModule.$taskDefinitions) {
-                var taskId = path.join(moduleName,taskItem.methodName);
+                var taskId = path.join(moduleName,taskItem.methodName).replace(/\\/g,"/");
                 this._taskManager.add(taskId, taskItem.selector, taskModule[taskItem.methodName]);
             }
         }
