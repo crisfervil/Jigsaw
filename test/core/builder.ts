@@ -82,7 +82,7 @@ describe('core', function() {
     });
 
 
-    it.only('runs a template',function(done){
+    it('runs a template',function(done){
 
       var executed = false;
       var tr:TemplateRunner = {runTemplate:(x,y)=>{executed=true;return Promise.resolve(null);}};
