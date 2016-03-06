@@ -42,14 +42,14 @@ describe("Integration tests",function(){
 
                         // validate templates
                         assert.ok(builder.templateManager.templates());
-                        assert.equal(builder.templateManager.templates().length,2);
+                        assert.equal(builder.templateManager.templates().length,4);
                         assert.equal(builder.templateManager.templates()[0].module,"m1");
                         assert.equal(builder.templateManager.templates()[0].id,"template1");
-                        assert.equal(builder.templateManager.templates()[0].path,path.join("templates","template1.js"));
+                        assert.equal(builder.templateManager.templates()[0].path,path.join("templates","template1.htm"));
 
-                        assert.equal(builder.templateManager.templates()[1].module,"m2");
-                        assert.equal(builder.templateManager.templates()[1].id,"template1");
-                        assert.equal(builder.templateManager.templates()[1].path,path.join("templates","template1.js"));
+                        assert.equal(builder.templateManager.templates()[2].module,"m2");
+                        assert.equal(builder.templateManager.templates()[2].id,"template1");
+                        assert.equal(builder.templateManager.templates()[2].path,path.join("templates","template1.htm"));
 
 
                         done(); })

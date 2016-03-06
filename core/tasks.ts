@@ -60,7 +60,7 @@ export class TaskManager {
         return foundTasks;
     }
 
-    public getByContext(itemPath:string,rootObject,currentObject):Task[] {
+    public getByContext(itemPath:string,rootObject,item):Task[] {
         var foundTasks = new Array<Task>();
 
         for (var index = 0; index < this._tasks.length; index++) {
@@ -70,7 +70,7 @@ export class TaskManager {
             }
             else if(JsonPath.areEquals(currentTask.selector,itemPath)) {
                 var found = JsonPath.find(rootObject,currentTask.selector);
-                if(found==currentObject){
+                if(found==item){
                   foundTasks.push(currentTask);
                 }
             }

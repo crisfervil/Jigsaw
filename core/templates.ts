@@ -1,20 +1,21 @@
 /// <reference path="../typings/main.d.ts" />
 /// <reference path="../typings/custom.d.ts" />
 
+import {TaskExecutionContext} from "./tasks";
+import {JsonPath} from "./jsonPath";
 
 import path = require("path");
 import {fs} from "../util/fs";
 import util = require("util");
 import ejs = require("ejs");
 
-import {TaskExecutionContext} from "./tasks";
 
 export class Template {
     id:string;
     path:string;
     module:string;
     content:string;
-    item:{path:string,criteria:string};
+    //item:{path:string,criteria:string};
     selector:string;
     outputPath:string;
 }
@@ -36,7 +37,6 @@ export class EJSTemplateRunner implements TemplateRunner {
       return new Promise<void>((resolve, reject)=> {
 
         // render the template using ejs
-        // TODO: Allow other template engines
         console.log("running template %s for %s...", template.id, context.currentItemPath);
         var templateContext:any = context; // used just to convert to the appropriate type
         var result = ejs.render(template.content, templateContext);
@@ -68,6 +68,8 @@ export class EJSTemplateRunner implements TemplateRunner {
 }
 
 export class TemplateManager {
+
+    private _selector_output = /(?:\/{2,}|<!--)\s*(selector|outputPath)\s*\:\s*(.*)(?:-{2}>)*/;
 
     private _templates = new Array<Template>();
     private _templateRunner:TemplateRunner;
@@ -110,46 +112,20 @@ export class TemplateManager {
     //* Sets the template content and tries to read the item and output from it */
     private setContent(template:Template,content:string){
       template.content=content;
-
+      var removeCount=0;
       var templateLines = content.split("\n");
-
-      if(templateLines.length>0){
-        template.item = this.getItemFromTemplate(templateLines[0]);
-        if(!template.item) template.item = this.getItemFromTemplate(templateLines[1]);
-        template.outputPath = this.getOutputFromTemplate(templateLines[0]);
-        if(!template.outputPath) template.outputPath = this.getOutputFromTemplate(templateLines[1]);
+      for(var i=0;i<templateLines.length&&i<2;i++){
+        var m = this._selector_output.exec(templateLines[0]);
+        if(m&&m[1]&&m[2]){
+          removeCount+=m[0].length;
+          var type=m[1],value=m[2];
+          template.selector = type=="selector"?value:null;
+          template.outputPath = type=="outputPath"?value:null;
+          templateLines.shift(); // removes this line from content
+        }
       }
-    }
-
-    private getItemFromTemplate(templateLine:string){
-      var result:{path:string,criteria:string};
-      var re = /\/+\**\s*item\s*:\s*(.*)/g;
-      var found = re.exec(templateLine);
-      if(found){
-        if(found.length>1)
-          var re2 = /([^[]*)(\[([^\]]+)\])*/g
-          var found2 = re2.exec(found[1]);
-          if(found2){
-            if(found2.length>0){
-              result = {path:found2[1],criteria:null};
-              if(found2.length>2){
-                result.criteria = found2[3];
-              }
-            }
-          }
-      }
-      return result;
-    }
-
-    private getOutputFromTemplate(templateLine:string){
-      var result:string;
-      var re = /\/+\**\s*output\s*:\s*(.*)/g;
-      var found = re.exec(templateLine);
-      if(found){
-        if(found.length>1)
-          result = found[1];
-      }
-      return result;
+      if(removeCount>0)
+        template.content=template.content.slice(0,removeCount);
     }
 
     private loadTemplatesContent(templates:Array<Template>, workingDir:string):Promise<Template[]> {
@@ -226,40 +202,40 @@ export class TemplateManager {
             .then<Template[]>(x=>returnTemplates);
     }
 
-    private matchesTemplateCriteria(criteria:string, context:TaskExecutionContext):boolean{
-      var returnValue = false;
-      try{
-        // TODO: Improve this. Is awful
-        returnValue = eval(criteria);
-      }catch(err){
-        console.log("warnig: error evaluating template criteria: %s", criteria);
-        console.log(err);
-      }
+    public getTemplatesForContext(itemPath:string,rootObject,item):Template[]{
+      var foundTemplates=new Array<Template>();
 
-
-      return returnValue;
-    }
-
-    public runTemplateOnContext(context:TaskExecutionContext):Promise<any>{
-      var returnValue = Promise.resolve<void>();
-      var promises = new Array<Promise<void>>();
       for(var i=0;i<this._templates.length;i++){
         var currentTemplate = this._templates[i];
-        //console.log("t:"+currentTemplate.item.path);
-        //console.log("i:"+context.currentItemPath);
-        if(currentTemplate.item && currentTemplate.item.path==context.currentItemPath){
-          var matches = false;
-          if(currentTemplate.item.criteria){
-              matches = this.matchesTemplateCriteria(currentTemplate.item.criteria, context);
-          }
-          if(!currentTemplate.item.criteria||matches){
-            var curPromise = this._templateRunner.runTemplate(currentTemplate,context);
-            promises.push(curPromise);
-          }
+
+        if(itemPath==currentTemplate.selector){
+          foundTemplates.push(currentTemplate);
+        }
+        else if(JsonPath.areEquals(currentTemplate.selector,itemPath)) {
+            var found = JsonPath.find(rootObject,currentTemplate.selector);
+            if(found==item){
+              foundTemplates.push(currentTemplate);
+            }
         }
       }
-      returnValue = Promise.all(promises)
-                    .then<void>(x=>{});// this just to convert returned values to void
+
+      // If there are not values, return null instead of an empty array
+      return foundTemplates.length>0?foundTemplates:null;
+    }
+
+    public runTemplateOnContext(context:TaskExecutionContext):Promise<void>{
+      var returnValue = Promise.resolve<void>();
+      var promises = new Array<Promise<void>>();
+      var foundTemplates = this.getTemplatesForContext(context.currentItemPath,context.appDef,context.currentItem);
+      if(foundTemplates){
+        for(var i=0;i<foundTemplates.length;i++){
+          var currentTemplate = foundTemplates[i];
+          var curPromise = this._templateRunner.runTemplate(currentTemplate,context);
+          promises.push(curPromise);
+        }
+        returnValue = Promise.all(promises)
+                      .then<void>(x=>null);// this just to convert returned values to null
+      }
       return returnValue;
     }
 

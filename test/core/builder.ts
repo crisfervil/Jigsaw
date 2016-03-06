@@ -1,6 +1,7 @@
 /// <reference path="../../typings/main.d.ts" />
 import {Builder} from "../../core/builder"
 import {TaskExecutionContext} from "../../core/tasks"
+import {Template,TemplateManager,TemplateRunner} from "../../core/templates";
 import assert = require("assert");
 
 describe('core', function() {
@@ -80,20 +81,29 @@ describe('core', function() {
       });
     });
 
-/*
-    it('runs a template',function(done){
-      var b = new Builder(process.cwd());
 
-      var appDef = {myobject:{myprop:"value"}}
+    it.only('runs a template',function(done){
+
+      var executed = false;
+      var tr:TemplateRunner = {runTemplate:(x,y)=>{executed=true;return Promise.resolve(null);}};
+      var tm = new TemplateManager(tr);
+      var b = new Builder(process.cwd(),tm);
+
+      var t = new Template();
+      t.selector = "myobject/mysecondobject";
+
+      var appDef = {myobject:{mysecondobject:{myprop:"value"}}};
       b.appDef = appDef;
-      b.templateManager.add({});
+      b.templateManager.add(t);
 
       var context = new TaskExecutionContext();
-      context.currentItemPath = "root";
+      context.currentItemPath = "/";
       context.currentItem = appDef;
-      b.buildObject(context);
-
-    });*/
-
+      context.appDef = appDef;
+      b.buildObject(context).then(x=>{
+          assert.equal(true,executed,"The template wasnt executed :(");
+          done();
+      });
+    });
   });
 });

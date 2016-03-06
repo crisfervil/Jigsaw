@@ -20,7 +20,9 @@ export class Builder {
 
     installedModules: string[] = [];
 
-    constructor(private workingDir: string) {
+    constructor(private workingDir: string, templateManager?:TemplateManager) {
+      if(templateManager!==undefined)
+        this._templateManager=templateManager;
     }
 
     /**
