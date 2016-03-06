@@ -105,5 +105,38 @@ describe('core', function() {
           done();
       });
     });
+
+    it('runs several templates',function(done){
+
+      var executed = {t1:false,t2:false,t3:false};
+      var tr:TemplateRunner = {runTemplate:(template,context)=>{executed[template.id]=true;return Promise.resolve(null);}};
+      var tm = new TemplateManager(tr);
+      var b = new Builder(process.cwd(),tm);
+
+      var t1 = new Template();
+      t1.id = "t1";
+      t1.selector = "myobject/mysecondobject";
+
+      var t2 = new Template();
+      t2.id = "t2";
+      t2.selector = "myobject/mysecondobject";
+
+      var t3 = new Template();
+      t3.id = "t3";
+      t3.selector = "/";
+
+      var appDef = {myobject:{mysecondobject:{myprop:"value"}}};
+      b.appDef = appDef;
+      b.templateManager.addRange([t1,t2,t3]);
+
+      var context = new TaskExecutionContext();
+      context.currentItemPath = "/";
+      context.currentItem = appDef;
+      context.appDef = appDef;
+      b.buildObject(context).then(x=>{
+          assert.deepEqual({t1:true,t2:true,t3:true},executed,"The template wasnt executed :(");
+          done();
+      });
+    });
   });
 });

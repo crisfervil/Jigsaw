@@ -69,7 +69,7 @@ export class EJSTemplateRunner implements TemplateRunner {
 
 export class TemplateManager {
 
-    private _selector_output = /(?:\/{2,}|<!--)\s*(selector|outputPath)\s*\:\s*(.*)(?:-{2}>)*/;
+    private _selector_output = /(?:\/{2,}|<!--)\s*(selector|outputPath)\s*\:\s*(.*(?=-->)|.*)/;
 
     private _templates = new Array<Template>();
     private _templateRunner:TemplateRunner;
@@ -115,17 +115,17 @@ export class TemplateManager {
       var removeCount=0;
       var templateLines = content.split("\n");
       for(var i=0;i<templateLines.length&&i<2;i++){
-        var m = this._selector_output.exec(templateLines[0]);
+        var m = this._selector_output.exec(templateLines[i]);
         if(m&&m[1]&&m[2]){
-          removeCount+=m[0].length;
+          removeCount+=templateLines[i].length+1;
           var type=m[1],value=m[2];
-          template.selector = type=="selector"?value:null;
-          template.outputPath = type=="outputPath"?value:null;
-          templateLines.shift(); // removes this line from content
+          if(type=="selector") template.selector = value;
+          if(type=="outputPath") template.outputPath = value;
+          //templateLines.shift(); // removes this line from content
         }
       }
       if(removeCount>0)
-        template.content=template.content.slice(0,removeCount);
+        template.content=template.content.substring(removeCount);
     }
 
     private loadTemplatesContent(templates:Array<Template>, workingDir:string):Promise<Template[]> {

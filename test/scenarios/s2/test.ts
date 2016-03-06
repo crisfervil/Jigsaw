@@ -43,9 +43,16 @@ describe("Integration tests",function(){
                         // validate templates
                         assert.ok(builder.templateManager.templates());
                         assert.equal(builder.templateManager.templates().length,4);
-                        assert.equal(builder.templateManager.templates()[0].module,"m1");
-                        assert.equal(builder.templateManager.templates()[0].id,"template1");
-                        assert.equal(builder.templateManager.templates()[0].path,path.join("templates","template1.htm"));
+
+                        var expectedT1 = {module:"m1",
+                                          id:"template1",
+                                          path:path.join("templates","template1.htm"),
+                                          selector:"/test/test2[0]/test",
+                                          outputPath:"templateOutput/<%=currentItem.id%>.htm",
+                                          content:"This is a Test\r\n"};
+                        var t1 = builder.templateManager.templates()[0];
+                        assert.deepEqual(t1,expectedT1,JSON.stringify(t1));
+
 
                         assert.equal(builder.templateManager.templates()[2].module,"m2");
                         assert.equal(builder.templateManager.templates()[2].id,"template1");
