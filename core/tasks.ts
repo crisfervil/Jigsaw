@@ -80,38 +80,38 @@ export class TaskManager {
     }
 
 
-    public runBySelector(selector:string, context:TaskExecutionContext) {
+    public runBySelector(selector:string, context:TaskExecutionContext):Promise<any[]> {
         var tasks = this.getByContext(selector,context.appDef,context.currentItem);
-        if (tasks.length == 0) {
-            console.log("Warning: No tasks found with id: %s", selector);
-        }
         return this.runAll(tasks, context);
     }
 
-    public runAll(tasks:Task[], context:TaskExecutionContext) {
-        var promises:Array<Promise<TaskExecutionContext>> = [];
-        for (var i = 0; i < tasks.length; i++) {
-            var task = tasks[i];
-            // This runs all the tasks in parallel
-            var p = this.runTask(task, context);
-            promises.push(p);
+
+    public runAll(tasks:Task[], context:TaskExecutionContext):Promise<any[]> {
+        var promises:Array<Promise<any>> = [];
+        if(tasks){
+          for (var i = 0; i < tasks.length; i++) {
+              var task = tasks[i];
+              // This runs all the tasks in parallel
+              var p = this.runTask(task, context);
+              promises.push(p);
+          }
         }
-        return Promise.all(promises).then<TaskExecutionContext>(x=>context);
+        return Promise.all(promises);
     }
 
-    private runTask(task:Task, context:TaskExecutionContext) {
-        return new Promise<TaskExecutionContext>((resolve, reject)=> {
-            //console.log("Running task %s...", task.id);
+    // This supports running sync and async tasks
+    private runTask(task:Task, context:TaskExecutionContext):Promise<any> {
+        return new Promise<any>((resolve, reject)=> {
             try {
-                var retVal = task.action.call(this, context);
-                if (retVal && retVal instanceof Promise) {
+                var taskRetVal = task.action.call(this, context);
+                if (taskRetVal && taskRetVal instanceof Promise) {
                     // If the task has returned a Promise, means that is an asyn task
                     // So, wait until is resolved
-                    var returnedPromise:Promise<any> = retVal;
+                    var returnedPromise:Promise<any> = taskRetVal;
                     returnedPromise
-                        .then(()=> {
+                        .then(x=> {
                             //console.log("done!");
-                            resolve(context);
+                            resolve(x);
                         })
                         .catch(err=> {
                             // Error executing the task
@@ -123,7 +123,7 @@ export class TaskManager {
                     // If the task returns nothing or any other value
                     // means that is a sync task, so we can resolve it immediately
                     //console.log("done!");
-                    resolve(context);
+                    resolve(taskRetVal);
                 }
             }
             catch (err) {

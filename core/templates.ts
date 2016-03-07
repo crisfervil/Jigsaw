@@ -120,6 +120,8 @@ export class TemplateManager {
         if(m&&m[1]&&m[2]){
           removeCount+=templateLines[i].length+os.EOL.length;
           var type=m[1],value=m[2];
+          // remove empty spaces
+          value = value.trim();
           if(type=="selector") template.selector = value;
           if(type=="outputPath") template.outputPath = value;
           //templateLines.shift(); // removes this line from content

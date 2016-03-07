@@ -55,5 +55,8 @@ typings/**
 npm-debug.log
 
 # Include Test templates
-!test/scenarios/s2/node_modules/m1/templates/**
 !test/scenarios/s2/node_modules/m2/templates/**
+!test/scenarios/s2/node_modules/m1/templates/**
+
+# ignore generated files in scenarios
+test/scenarios/s2/data/

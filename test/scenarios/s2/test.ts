@@ -4,10 +4,12 @@ import {TaskExecutionContext} from "../../../core/tasks";
 
 import assert = require("assert");
 import path = require("path");
+import os = require("os");
 
 describe("Integration tests",function(){
   describe("Scenario 2", function() {
-    it("Loads and installs package correctly",function(done){
+
+    it("Loads package correctly",function(done){
         var builder = new Builder(__dirname);
         builder.load()
             .then(()=>{
@@ -30,7 +32,7 @@ describe("Integration tests",function(){
                         assert.deepEqual(expectedAppDef,appDef);
 
 
-                        // validate the taks
+                        // validate the tasks
                         assert.equal(builder.taskManager.tasks().length,2);
                         assert.equal(builder.taskManager.tasks()[0].id,"m1/MyBuildTasks/MyAppTask");
                         assert.equal(builder.taskManager.tasks()[0].selector,"app");
@@ -45,22 +47,61 @@ describe("Integration tests",function(){
                         assert.equal(builder.templateManager.templates().length,4);
 
                         var expectedT1 = {module:"m1",
+                        id:"template1",
+                        path:path.join("templates","template1.htm"),
+                        selector:"/test/test2[0]/test",
+                        outputPath:"templateOutput/<%=currentItem.id%>.htm",
+                        content:"This is a Test"+os.EOL};
+                        var t1 = builder.templateManager.templates()[0];
+                        assert.deepEqual(t1,expectedT1,JSON.stringify(t1));
+
+                        var expectedT2 = {module:"m1",
+                        id:"template1",
+                        path:path.join("templates","template1.js"),
+                        selector:"/test/test2[0]/test",
+                        outputPath:"templateOutput/<%=currentItem.id%>.js",
+                        content:"// This is a Test"+os.EOL};
+                        var t2 = builder.templateManager.templates()[1];
+                        assert.deepEqual(t2,expectedT2,JSON.stringify(t2));
+
+                        var expectedT3 = {module:"m2",
                                           id:"template1",
                                           path:path.join("templates","template1.htm"),
                                           selector:"/test/test2[0]/test",
                                           outputPath:"templateOutput/<%=currentItem.id%>.htm",
-                                          content:"This is a Test"};
-                        var t1 = builder.templateManager.templates()[0];
-                        assert.deepEqual(t1,expectedT1,JSON.stringify(t1));
+                                          content:"This is a Test"+os.EOL};
+                        var t3 = builder.templateManager.templates()[2];
+                        assert.deepEqual(t3,expectedT3,JSON.stringify(t3));
 
-
-                        assert.equal(builder.templateManager.templates()[2].module,"m2");
-                        assert.equal(builder.templateManager.templates()[2].id,"template1");
-                        assert.equal(builder.templateManager.templates()[2].path,path.join("templates","template1.htm"));
+                        var expectedT4 = {module:"m2",
+                                          id:"template1",
+                                          path:path.join("templates","template1.js"),
+                                          selector:"/test/test2[0]/test",
+                                          outputPath:"templateOutput/<%=currentItem.id%>.js",
+                                          content:"// This is a Test"+os.EOL};
+                        var t4 = builder.templateManager.templates()[3];
+                        assert.deepEqual(t4,expectedT4,JSON.stringify(t4));
 
 
                         done(); })
-            .catch(error=>{done(error);});
+            .catch(done);
     });
+
+    it("Installs package correctly",function(done){
+        var builder = new Builder(__dirname);
+        builder.load()
+            .then(()=>{
+                        builder.build()
+                        .then(()=>{
+
+                          // perform asserts
+
+                          done();
+
+                        })
+                       })
+            .catch(done);
+    });
+
   });
 });
