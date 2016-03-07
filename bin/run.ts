@@ -9,9 +9,9 @@ var cmdLineArgs = process.argv;
 var builder = new Builder(process.cwd());
 
 function showHelp() {
-    console.log("USE: gm build")
+    console.log("USE: jigs build")
     console.log("Builds the current project")
-    console.log("USE: gm show")
+    console.log("USE: jigs show")
     console.log("Loads the defined modules, puts together all the definitions and validates the results. Also shows all loades tasks and templates.")
 }
 
@@ -30,7 +30,7 @@ function show() {
     builder.load() // load before listing things
         .then(() => {
             console.log("templates:");
-            var templatesString = JSON.stringify(builder.templateManager.templates(), ["id", "path", "module", "item", "output", "criteria"], 2);
+            var templatesString = JSON.stringify(builder.templateManager.templates(), ["id", "path", "module", "selector", "outputPath"], 2);
             console.log(templatesString);
 
             console.log("tasks:");

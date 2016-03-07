@@ -260,8 +260,8 @@ export class Builder {
             var appPkgId = path.join(this.workingDir, "package.json");
             var appPkg = this.tryGetModule(appPkgId);
 
-            if (appPkg && appPkg.config && appPkg.config.greenmouse && appPkg.config.greenmouse.packages) {
-                this.installedModules = appPkg.config.greenmouse.packages;
+            if (appPkg && appPkg.config && appPkg.config.jigsaw && appPkg.config.jigsaw.packages) {
+                this.installedModules = appPkg.config.jigsaw.packages;
             }
 
             this._modelDef = this.buildJson(this.installedModules, this.workingDir, "model");

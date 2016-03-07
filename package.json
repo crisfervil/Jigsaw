@@ -5,7 +5,7 @@
   "main": "./index.js",
   "author": "crisfervil",
   "bin": {
-    "gm": "bin/run.js"
+    "jigs": "bin/run.js"
   },
   "scripts": {
     "install": "typings install && tsc -p .",

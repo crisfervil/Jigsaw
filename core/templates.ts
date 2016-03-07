@@ -16,7 +16,6 @@ export class Template {
     path:string;
     module:string;
     content:string;
-    //item:{path:string,criteria:string};
     selector:string;
     outputPath:string;
 }
