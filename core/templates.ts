@@ -8,6 +8,7 @@ import path = require("path");
 import {fs} from "../util/fs";
 import util = require("util");
 import ejs = require("ejs");
+import os = require("os");
 
 
 export class Template {
@@ -113,11 +114,11 @@ export class TemplateManager {
     private setContent(template:Template,content:string){
       template.content=content;
       var removeCount=0;
-      var templateLines = content.split("\n");
+      var templateLines = content.split(os.EOL);
       for(var i=0;i<templateLines.length&&i<2;i++){
         var m = this._selector_output.exec(templateLines[i]);
         if(m&&m[1]&&m[2]){
-          removeCount+=templateLines[i].length+1;
+          removeCount+=templateLines[i].length+os.EOL.length;
           var type=m[1],value=m[2];
           if(type=="selector") template.selector = value;
           if(type=="outputPath") template.outputPath = value;

@@ -49,7 +49,7 @@ describe("Integration tests",function(){
                                           path:path.join("templates","template1.htm"),
                                           selector:"/test/test2[0]/test",
                                           outputPath:"templateOutput/<%=currentItem.id%>.htm",
-                                          content:"This is a Test\r\n"};
+                                          content:"This is a Test"};
                         var t1 = builder.templateManager.templates()[0];
                         assert.deepEqual(t1,expectedT1,JSON.stringify(t1));
 
