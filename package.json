@@ -8,16 +8,18 @@
     "jigs": "bin/run.js"
   },
   "scripts": {
-    "install": "typings install && tsc -p .",
+    "build": "typings install && tsc -p .",
     "test": "mocha --recursive",
-    "cover": "istanbul cover node_modules\\mocha\\bin\\_mocha -- --recursive",
-    "doc":"jsdoc core/ -r -d doc"
+    "cover": "istanbul cover ./node_modules/mocha/bin/_mocha -- --recursive",
+    "codecov": "istanbul cover ./node_modules/mocha/bin/_mocha -- --recursive && ./node_modules/.bin/codecov",
+    "doc": "jsdoc core/ -r -d doc"
   },
   "dependencies": {
     "ejs": "^2.3.4",
     "tv4": "^1.2.7"
   },
   "devDependencies": {
+    "codecov": "^1.0.1",
     "istanbul": "^0.4.2",
     "jsdoc": "^3.4.0",
     "mocha": "^2.4.5",

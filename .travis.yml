@@ -2,3 +2,5 @@ language: node_js
 node_js:
   - "node"
   - "stable"
+before_script: npm run build
+script: npm run codecov

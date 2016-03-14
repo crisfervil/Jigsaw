@@ -1,4 +1,4 @@
-# Project description [![Build Status](https://travis-ci.org/crisfervil/Jigsaw.svg?branch=master)](https://travis-ci.org/crisfervil/Jigsaw)
+# Project description [![Build Status](https://travis-ci.org/crisfervil/Jigsaw.svg?branch=master)](https://travis-ci.org/crisfervil/Jigsaw) [![codecov.io](https://codecov.io/github/crisfervil/Jigsaw/coverage.svg?branch=master)](https://codecov.io/github/crisfervil/Jigsaw?branch=master)
 Extensible [DSL](https://en.wikipedia.org/wiki/Domain-specific_language) framework to build any type of applications.
 
 The main difference with others DSL frameworks is that this is an **Extensible** DSL.
