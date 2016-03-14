@@ -11,7 +11,7 @@
     "build": "typings install && tsc -p .",
     "test": "mocha --recursive",
     "cover": "istanbul cover ./node_modules/mocha/bin/_mocha -- --recursive",
-    "codecov": "istanbul cover ./node_modules/mocha/bin/_mocha -- --recursive && ./node_modules/.bin/codecov",
+    "codecov": "istanbul cover ./node_modules/mocha/bin/_mocha -- --recursive -R spec \\ && ./node_modules/.bin/codecov",
     "doc": "jsdoc core/ -r -d doc"
   },
   "dependencies": {
