@@ -26,6 +26,26 @@ function build() {
         .catch(console.log);
 }
 
+function link(args:string[]){
+//  const spawn = require('child_process').spawn;
+//  const link = spawn('npm.cmd', ['link'].concat(args));
+
+  const command = ['npm','link'].concat(args).join(' ');
+  const exec = require('child_process').exec;
+  const child = exec(command,
+    (error, stdout, stderr) => {
+      console.log(`stdout: ${stdout}`);
+      console.log(`stderr: ${stderr}`);
+      if (error !== null) {
+        console.log(`exec error: ${error}`);
+      }
+  });
+}
+
+function install(args:string[]){
+  console.log(args);
+}
+
 function show() {
     builder.load() // load before listing things
         .then(() => {
@@ -52,6 +72,12 @@ if (cmdLineArgs.length > 1) {
             break;
         case "show":
             show();
+            break;
+        case "install":
+            install(cmdLineArgs.slice(3));
+            break;
+        case "link":
+            link(cmdLineArgs.slice(3));
             break;
         default:
             wrongParameters();
