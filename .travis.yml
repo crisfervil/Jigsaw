@@ -1,6 +1,10 @@
 language: node_js
 node_js:
-  - "node"
   - "stable"
+install:
+  - npm install -g codecov
+  - npm install
 before_script: npm run build
-script: npm run codecov
+script:
+  - npm run cover  
+  - codecov
