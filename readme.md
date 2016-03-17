@@ -8,24 +8,21 @@ The best way to start working with Jigsaw is installing a module that contains a
 
 Install for example the [MEAN module](https://github.com/crisfervil/Jigsaw-mean), that allows you to create a MEAN based application.
 
-First, create a directory to store your application
+First, create a directory to store your application and cd into it
 ```
-$ mkdir myapp
+$ mkdir myapp && cd myapp
 ```
-
-Then cd into it
-```
-$ cd myapp
-```
-
 Install Jigsaw
 ```
 $ npm install -g jigs
 ```
-
 Install the MEAN module. This will install also the required components.
 ```
 $ jigs install jigsaw-mean
+```
+Build components
+```
+$ jigs build
 ```
 Then start the application
 ```
