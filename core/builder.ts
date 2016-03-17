@@ -33,7 +33,7 @@ export class Builder {
         for (var i = 0; i < installedModules.length; i++) {
             var installedModule = installedModules[i];
             var jsonFileId = path.join(workingDir, "node_modules", installedModule, fileName);
-            var moduleJsonObj = this.tryGetModule(jsonFileId);
+            var moduleJsonObj = Obj.tryGetModule(jsonFileId);
             if (moduleJsonObj) {
                 jsonObj = Obj.extend(jsonObj, moduleJsonObj);
             }
@@ -45,15 +45,6 @@ export class Builder {
         var root = m;
         while (root.parent) root = root.parent;
         return root;
-    }
-
-    private tryGetModule(moduleId: string) {
-        var result = null;
-        try {
-            result = require(moduleId);
-        } catch (e) { }
-
-        return result;
     }
 
     private loadTaskSet(taskModule: TaskSet, moduleName:string) {
@@ -87,7 +78,7 @@ export class Builder {
         for (var i = 0; i < installedModules.length; i++) {
             var installedModule = installedModules[i];
             var taskModuleId = path.join(workingDir, "node_modules", installedModule, "tasks");
-            var taskModule = this.tryGetModule(taskModuleId);
+            var taskModule = Obj.tryGetModule(taskModuleId);
             if (taskModule) {
                 this.loadTaskModule(taskModule, installedModule);
             }
@@ -258,7 +249,7 @@ export class Builder {
 
         try {
             var appPkgId = path.join(this.workingDir, "package.json");
-            var appPkg = this.tryGetModule(appPkgId);
+            var appPkg = Obj.tryGetModule(appPkgId);
 
             if (appPkg && appPkg.config && appPkg.config.jigsaw && appPkg.config.jigsaw.packages) {
                 this.installedModules = appPkg.config.jigsaw.packages;
@@ -269,13 +260,13 @@ export class Builder {
 
             // merge with main model def
             var mainModelDefModuleId = path.join(this.workingDir, "model.json");
-            var mainModelDef = this.tryGetModule(mainModelDefModuleId);
+            var mainModelDef = Obj.tryGetModule(mainModelDefModuleId);
             if (mainModelDef)
                 this._modelDef = Obj.extend(this._modelDef, mainModelDef);
 
             // merge with main app def
             var mainAppDefModuleId = path.join(this.workingDir, "app.json");
-            var mainAppDef = this.tryGetModule(mainAppDefModuleId);
+            var mainAppDef = Obj.tryGetModule(mainAppDefModuleId);
             if (mainAppDef)
                 this._appDef = Obj.extend(this._appDef, mainAppDef);
 

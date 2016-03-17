@@ -3,7 +3,9 @@
 /// <reference path="../typings/main.d.ts" />
 
 import {Builder} from "../core/builder"
+import {Obj} from "../util/obj";
 import path = require("path");
+import fs = require("fs");
 
 var cmdLineArgs = process.argv;
 var builder = new Builder(process.cwd());
@@ -27,19 +29,69 @@ function build() {
 }
 
 function link(args:string[]){
-//  const spawn = require('child_process').spawn;
-//  const link = spawn('npm.cmd', ['link'].concat(args));
-
+  var packageId = args[0]; // the first parameter must be the package name
   const command = ['npm','link'].concat(args).join(' ');
-  const exec = require('child_process').exec;
-  const child = exec(command,
-    (error, stdout, stderr) => {
-      console.log(`stdout: ${stdout}`);
-      console.log(`stderr: ${stderr}`);
-      if (error !== null) {
-        console.log(`exec error: ${error}`);
+  const exec = require('child_process').execSync;
+
+  // TODO: handle errors
+  const stdout:Buffer = exec(command);
+
+  console.log(stdout.toString());
+
+  // review the installed package.json and install all dependencies
+  var installedModuleId = path.join(process.cwd(), "node_modules",packageId,"package.json");
+  var installedPackageJson = Obj.tryGetModule(installedModuleId);
+  if(installedPackageJson&&installedPackageJson.config&&installedPackageJson.config.jigsaw&&installedPackageJson.config.jigsaw.dependencies){
+      var dependencies = installedPackageJson.config.jigsaw.dependencies;
+      for(var propName in dependencies){
+        installDependency(propName, dependencies[propName]);
       }
-  });
+  }
+  else {
+    console.log("no dependencies found");
+  }
+  //after intsall, save installed module
+  saveInstalledModule(packageId);
+}
+
+
+function saveInstalledModule(moduleName:string){
+  var myModuleId = path.join(process.cwd(), "package.json");
+  var myPackageJson = Obj.tryGetModule(myModuleId);
+
+  // TODO: If the file exist, but it can't be parsed, throw an error
+
+  if(!myPackageJson){
+    myPackageJson = {};
+  }
+  if(!myPackageJson.config){
+    myPackageJson.config = {};
+  }
+  if(!myPackageJson.config.jigsaw){
+    myPackageJson.config.jigsaw = {};
+  }
+  if(!myPackageJson.config.jigsaw.packages){
+    myPackageJson.config.jigsaw.packages = [];
+  }
+
+  var packages = myPackageJson.config.jigsaw.packages;
+
+  if(!Array.isArray(packages)) throw "error saving installed package";
+
+  if(packages.indexOf(moduleName)<0){
+    packages.push(moduleName);
+  }
+
+  // save file
+  fs.writeFileSync(myModuleId,JSON.stringify(myPackageJson,null,3));
+
+}
+
+function installDependency(moduleName:string, version:string){
+  console.log(`installing ${moduleName} ${version}...`)
+  if(version=="link"){
+    link([moduleName]);
+  }
 }
 
 function install(args:string[]){

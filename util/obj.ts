@@ -2,6 +2,15 @@
 
 export class Obj{
 
+	public static tryGetModule(moduleId: string) {
+			var result = null;
+			try {
+					result = require(moduleId);
+			} catch (e) { }
+
+			return result;
+	}
+
 	public static clone(obj) {
 		if (null == obj || "object" != typeof obj) return obj;
 		var copy = {};
