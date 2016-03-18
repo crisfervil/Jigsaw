@@ -83,7 +83,7 @@ function saveInstalledModule(moduleName:string){
   }
 
   // save file
-  fs.writeFileSync(myModuleId,JSON.stringify(myPackageJson,null,3));
+  fs.writeFileSync(myModuleId,JSON.stringify(myPackageJson,null,"\t"));
 
 }
 
