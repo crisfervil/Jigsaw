@@ -64,6 +64,12 @@ Start
 $ jigs start
 ```
 
+# How to build
+Clone repository
+npm install
+npm run build
+
+
 
 # Requirements
 Requires [Node.js](nodejs.org)
