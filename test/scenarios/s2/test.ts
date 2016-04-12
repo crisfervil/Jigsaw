@@ -95,6 +95,8 @@ describe("Integration tests",function(){
                         .then(()=>{
 
                           // perform asserts
+                          
+                          // TODO: Check if the template files were rendered
 
                           done();
 

@@ -59,6 +59,7 @@ function saveInstalledModule(moduleName:string){
   var myModuleId = path.join(process.cwd(), "package.json");
   var myPackageJson = Obj.tryGetModule(myModuleId);
 
+  // TODO: Create package.json if it doesn't exists 
   // TODO: If the file exist, but it can't be parsed, throw an error
 
   if(!myPackageJson){
@@ -108,7 +109,8 @@ function show() {
             console.log("tasks:");
             var tasksString = JSON.stringify(builder.taskManager.tasks(), null, 2);
             console.log(tasksString);
-        });
+        })
+        .catch(console.log);
 }
 
 function wrongParameters() {

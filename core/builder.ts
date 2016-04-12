@@ -299,7 +299,7 @@ export class Builder {
 
         // prepare the first execution context
         var context: TaskExecutionContext = {
-            appDef: this._appDef, currentItem: this._appDef, currentItemPath: "app",
+            appDef: this._appDef, currentItem: this._appDef, currentItemPath: "/",
             modelDef: this._modelDef, workingDir: this.workingDir
         };
         // begin building the app

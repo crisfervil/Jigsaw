@@ -72,7 +72,7 @@ export class TemplateManager {
     private _selector_output = /(?:\/{2,}|<!--)\s*(selector|outputPath)\s*\:\s*(.*(?=-->)|.*)/;
 
     private _templates = new Array<Template>();
-    private _templateRunner:TemplateRunner;
+    private _templateRunner:TemplateRunner=new EJSTemplateRunner();
 
     constructor(templateRuner?:TemplateRunner){
       if(templateRuner!==undefined){
