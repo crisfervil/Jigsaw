@@ -2,6 +2,7 @@
   "ambientDependencies": {
     "es6-promise": "github:DefinitelyTyped/DefinitelyTyped/es6-promise/es6-promise.d.ts#7de6c3dd94feaeb21f20054b9f30d5dabc5efabd",
     "mocha": "github:DefinitelyTyped/DefinitelyTyped/mocha/mocha.d.ts#7de6c3dd94feaeb21f20054b9f30d5dabc5efabd",
+    "ncp": "registry:dt/ncp#0.5.1+20160316155526",
     "node": "github:DefinitelyTyped/DefinitelyTyped/node/node.d.ts#292e56b5acdb2157c3f53d70a77d34d64ba5fe2f"
   }
 }

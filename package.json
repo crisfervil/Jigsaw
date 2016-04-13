@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "ejs": "^2.3.4",
+    "ncp": "^2.0.0",
     "tv4": "^1.2.7"
   },
   "devDependencies": {

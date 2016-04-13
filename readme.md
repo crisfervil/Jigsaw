@@ -18,7 +18,7 @@ $ npm install -g jigs
 ```
 Install the MEAN module. This will install also the required components.
 ```
-$ jigs install jigsaw-mean
+$ npm install jigsaw-mean --save
 ```
 Build components
 ```
@@ -26,7 +26,7 @@ $ jigs build
 ```
 Then start the application
 ```
-$ jigs start
+$ npm start
 ```
 
 # Basic concepts
