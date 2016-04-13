@@ -41,6 +41,8 @@ export class EJSTemplateRunner implements TemplateRunner {
         var templateContext:any = context; // used just to convert to the appropriate type
         var result = ejs.render(template.content, templateContext);
 
+        if(!template.outputPath) throw `Error: Template "${template.id}" outputPath not set`;
+        
         var resultOutputPath= ejs.render(template.outputPath, templateContext);
 
         if (resultOutputPath) {
@@ -136,6 +138,7 @@ export class TemplateManager {
         for (var i = 0; i < templates.length; i++) {
             var template = templates[i];
 
+            // TODO: Validate that the template selector and output path have been set
             ((t)=>{
               var promise =
                 this.getTemplateContent(t, workingDir)
