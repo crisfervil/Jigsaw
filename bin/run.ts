@@ -1,21 +1,22 @@
 //#! /usr/bin/env node
 
-/// <reference path="../typings/main.d.ts" />
-
 import {Builder} from "../core/builder"
 import {Obj} from "../util/obj";
 import path = require("path");
 import fs = require("fs");
-import ncp = require("ncp");
 
 var cmdLineArgs = process.argv;
 var builder = new Builder(process.cwd());
 
 function showHelp() {
-    console.log("USE: jigs build")
-    console.log("Builds the current project")
-    console.log("USE: jigs show")
-    console.log("Loads the defined modules, puts together all the definitions and validates the results. Also shows all loades tasks and templates.")
+    console.log("USE: jigs help");
+    console.log("Shows this help");
+    console.log("USE: jigs build");
+    console.log("Builds the current project");
+    console.log("USE: jigs show");
+    console.log("Loads the defined modules, puts together all the definitions and validates the results. Also shows all loades tasks and templates.");
+    console.log("USE: jigs save module-name <configPath>");
+    console.log("Saves the specified module as an installed jigsaw module in the package.json file of the specified directory");
 }
 
 function build() {
@@ -29,36 +30,8 @@ function build() {
         .catch(console.log);
 }
 
-function link(args: string[]) {
-    var packageId = args[0]; // the first parameter must be the package name
-    const command = ['npm', 'link'].concat(args).join(' ');
-    const exec = require('child_process').execSync;
-
-    // TODO: handle errors
-    const stdout: Buffer = exec(command);
-
-    console.log(stdout.toString());
-
-    // review the installed package.json and install all dependencies
-    var installedModuleId = path.join(process.cwd(), "node_modules", packageId, "package.json");
-    var installedPackageJson = Obj.tryGetModule(installedModuleId);
-    if (installedPackageJson && installedPackageJson.config && installedPackageJson.config.jigsaw && installedPackageJson.config.jigsaw.dependencies) {
-        var dependencies = installedPackageJson.config.jigsaw.dependencies;
-        for (var propName in dependencies) {
-            // TODO: Investigate how to make each module to copy its dependencies to the project folder. That will simplify things
-            installDependency(propName, dependencies[propName]);
-        }
-    }
-    else {
-        console.log("no dependencies found");
-    }
-    //after intsall, save installed module
-    saveInstalledModule(packageId);
-}
-
-
-function saveInstalledModule(moduleName: string) {
-    var myModuleId = path.join(process.cwd(), "package.json");
+function saveInstalledModule(moduleName: string, dirPath?:string) {
+    var myModuleId = path.join(process.cwd(), dirPath, "package.json");
     var myPackageJson = Obj.tryGetModule(myModuleId);
 
     // TODO: Create package.json if it doesn't exists 
@@ -86,56 +59,11 @@ function saveInstalledModule(moduleName: string) {
     }
 
     // save file
-    fs.writeFileSync(myModuleId, JSON.stringify(myPackageJson, null, "\t"));
-
-}
-
-function installDependency(moduleName: string, version: string) {
-    console.log(`installing ${moduleName} ${version}...`)
-    if (version == "link") {
-        link([moduleName]);
-    }
-}
-
-function install(args: string[]) {
-    console.log(args);
-}
-
-function copyPackages(args: string[]) {
-    var packageSource = args[0];
-    copyPackagesAsync(packageSource,args.slice(1),error=>{
-        if(error) console.log(error);
+    fs.writeFile(myModuleId, JSON.stringify(myPackageJson, null, "\t"),err=>{
+        if(err) {
+            console.log(err);
+        }
     });
-}
-
-function copyPackagesAsync(source: String, packages: string[], callback: (error: Error) => void) {
-
-    if (packages.length == 0) {
-        callback(null); // no more items to copy
-    }
-    else {
-        var packageToCopy = packages[0];
-        // check if the package already exists in the app folder
-        var dirPath = path.join(process.cwd(), "node_modules", packageToCopy);
-        fs.exists(dirPath, exist => {
-            if (!exist) {
-                // copy folder
-                ncp.ncp(path.join(process.cwd(), "node_modules", source, "node_modules", packageToCopy),
-                    path.join(process.cwd(), "node_modules",packageToCopy), {}/*options*/,
-                    error => {
-                        if (error && callback) {
-                            callback(error);
-                        }
-                        else {
-                            // then move to the next package
-                            copyPackagesAsync(source, packages.slice(1), callback);
-                        }
-                    });
-            }
-            // move to the next package
-            copyPackagesAsync(source, packages.slice(1), callback);
-        });
-    }
 }
 
 function show() {
@@ -160,20 +88,22 @@ function wrongParameters() {
 if (cmdLineArgs.length > 1) {
     var command = cmdLineArgs[2];
     switch (command) {
+        case "help":
+            showHelp();
+            break;
         case "build":
             build();
             break;
         case "show":
             show();
             break;
-        case "install":
-            install(cmdLineArgs.slice(3));
-            break;
-        case "link":
-            link(cmdLineArgs.slice(3));
-            break;
-        case "copy-packages":
-            copyPackages(cmdLineArgs.slice(3));
+        case "save":
+            if(cmdLineArgs[3]) {
+                saveInstalledModule(cmdLineArgs[3],cmdLineArgs[4]);
+            }
+            else {
+                wrongParameters();
+            }
             break;
         default:
             wrongParameters();
