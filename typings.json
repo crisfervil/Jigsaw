@@ -1,8 +1,9 @@
 {
-  "ambientDependencies": {
-    "es6-promise": "github:DefinitelyTyped/DefinitelyTyped/es6-promise/es6-promise.d.ts#7de6c3dd94feaeb21f20054b9f30d5dabc5efabd",
-    "mocha": "github:DefinitelyTyped/DefinitelyTyped/mocha/mocha.d.ts#7de6c3dd94feaeb21f20054b9f30d5dabc5efabd",
-    "ncp": "registry:dt/ncp#0.5.1+20160316155526",
-    "node": "github:DefinitelyTyped/DefinitelyTyped/node/node.d.ts#292e56b5acdb2157c3f53d70a77d34d64ba5fe2f"
+  "globalDependencies": {
+    "debug": "registry:dt/debug#0.0.0+20160317120654",
+    "es6-promise": "registry:dt/es6-promise#0.0.0+20160614011821",
+    "mocha": "registry:dt/mocha#2.2.5+20160720003353",
+    "ncp": "registry:dt/ncp#0.5.1+20160906145159",
+    "node": "registry:dt/node#6.0.0+20160921192128"
   }
 }

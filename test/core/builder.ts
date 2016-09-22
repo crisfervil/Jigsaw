@@ -1,4 +1,5 @@
-/// <reference path="../../typings/main.d.ts" />
+/// <reference path="../../typings/index.d.ts" />
+
 import {Builder} from "../../core/builder"
 import {TaskExecutionContext} from "../../core/tasks"
 import {Template,TemplateManager,TemplateRunner} from "../../core/templates";

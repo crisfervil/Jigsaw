@@ -1,14 +1,23 @@
-/// <reference path="../typings/main.d.ts" />
+/// <reference path="../typings/index.d.ts" />
+/// <reference path="../typings/custom.d.ts" />
 
-export class Obj{
 
+var debug = require("debug")("jigsaw");
+
+export class Obj {
+
+	/** Tryes to get a module, and if there's an error, instead of throw it, returns null  */
 	public static tryGetModule(moduleId: string) {
-			var result = null;
-			try {
-					result = require(moduleId);
-			} catch (e) { }
+		var result = null;
+		
+		try {
+			result = require(moduleId);
+		} catch (e) {
+			debug("exception when trying to get module");
+			debug(e);
+		 }
 
-			return result;
+		return result;
 	}
 
 	public static clone(obj) {
@@ -24,35 +33,31 @@ export class Obj{
 	/**
 	 * Merges two objects. Copies all the properties of object2 in object1
 	 */
-	public static extend(object1, object2){
+	public static extend(object1, object2) {
 
-		if (!object1 || (object2 && typeof object2 != "object")){
+		if (!object1 || (object2 && typeof object2 != "object")) {
 			// merge non object values
-			object1=object2;
+			object1 = object2;
 		}
-		else
-		{
+		else {
 			// merge objects
-			for(var propName in object2){
+			for (var propName in object2) {
 				var obj1PropValue = object1[propName];
 				var obj2PropValue = object2[propName];
-				if(obj2PropValue) {
-					if(!obj1PropValue)
-					{
+				if (obj2PropValue) {
+					if (!obj1PropValue) {
 						// the property doesn't exist in obj1
 						object1[propName] = obj2PropValue;
 					}
 					else {
-						if (typeof obj2PropValue == "object"){
-							if(typeof obj1PropValue != "object"){
+						if (typeof obj2PropValue == "object") {
+							if (typeof obj1PropValue != "object") {
 								//Trying to merge different types of objects
 								object1[propName] = obj2PropValue
 							}
-							else{
-								if(Array.isArray(obj2PropValue))
-								{
-									if(!Array.isArray(obj1PropValue))
-									{
+							else {
+								if (Array.isArray(obj2PropValue)) {
+									if (!Array.isArray(obj1PropValue)) {
 										//Trying to merge different types of objects
 										object1[propName] = obj2PropValue
 									}
@@ -62,7 +67,7 @@ export class Obj{
 										}
 									}
 								}
-								else{
+								else {
 									// merge two non array obects
 									object1[propName] = this.extend(obj1PropValue, obj2PropValue);
 								}

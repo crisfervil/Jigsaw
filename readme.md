@@ -6,7 +6,7 @@ The main difference with others DSL frameworks is that this is an **Extensible**
 # How to start
 The best way to start working with Jigsaw is installing a module that contains a language definition and start playing around.
 
-Install for example the [MEAN module](https://github.com/crisfervil/Jigsaw-mean), that allows you to create a MEAN based application.
+Install for example the [MEAN module](https://github.com/crisfervil/Jigsaw-mean), that allows you to create a MEAN stack based application.
 
 First, create a directory to store your application and cd into it
 ```

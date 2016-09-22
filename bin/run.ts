@@ -1,4 +1,4 @@
-//#! /usr/bin/env node
+#! /usr/bin/env node
 
 import {Builder} from "../core/builder"
 import {Obj} from "../util/obj";

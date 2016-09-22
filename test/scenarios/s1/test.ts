@@ -1,4 +1,5 @@
-/// <reference path="../../../typings/main.d.ts" />
+/// <reference path="../../../typings/index.d.ts" />
+
 import {Builder} from "../../../core/builder"
 import assert = require("assert");
 import path = require("path");
