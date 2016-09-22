@@ -6,14 +6,14 @@ var debug = require("debug")("jigsaw");
 
 export class Obj {
 
-	/** Tryes to get a module, and if there's an error, instead of throw it, returns null  */
+	/** Tryes to get a module, and if there's an error, instead of throw it, it returns null  */
 	public static tryGetModule(moduleId: string) {
 		var result = null;
 		
 		try {
 			result = require(moduleId);
 		} catch (e) {
-			debug("exception when trying to get module");
+			debug(`exception when trying to get module ${moduleId}`);
 			debug(e);
 		 }
 

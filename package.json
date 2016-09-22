@@ -9,6 +9,7 @@
   },
   "scripts": {
     "build": "typings install && tsc -p .",
+    "build-dev": "tsc -p . --noUnusedParameters --noUnusedLocals",
     "test": "mocha --recursive",
     "cover": "istanbul cover ./node_modules/mocha/bin/_mocha -- --recursive",
     "doc": "jsdoc core/ -r -d doc"
