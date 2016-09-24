@@ -1,0 +1,7 @@
+{
+  "name": "jigsaw",
+  "directory": "ui/public/components",
+  "dependencies": {
+    "bootstrap": "^3.3.7"
+  }
+}

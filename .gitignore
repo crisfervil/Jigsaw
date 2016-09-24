@@ -53,6 +53,7 @@ typings/**
 .imdone/
 .vscode/
 npm-debug.log
+ui/public/components
 
 # Include Test templates
 !test/scenarios/s2/node_modules/m2/templates/**
