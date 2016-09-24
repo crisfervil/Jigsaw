@@ -2,6 +2,7 @@
 
 import {Builder} from "../core/builder"
 import {Obj} from "../util/obj";
+import {UIServer} from "../ui/ui";
 import path = require("path");
 import fs = require("fs");
 
@@ -80,6 +81,10 @@ function show() {
         .catch(console.log);
 }
 
+function edit(){
+    new UIServer().run();
+}
+
 function wrongParameters() {
     console.log("Wrong parameters");
     showHelp();
@@ -96,6 +101,9 @@ if (cmdLineArgs.length > 1) {
             break;
         case "show":
             show();
+            break;
+        case "edit":
+            edit();
             break;
         case "save":
             if(cmdLineArgs[3]) {
