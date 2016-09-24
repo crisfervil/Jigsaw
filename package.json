@@ -12,7 +12,8 @@
     "build-dev": "tsc -p . --noUnusedParameters --noUnusedLocals",
     "test": "mocha --recursive",
     "cover": "istanbul cover ./node_modules/mocha/bin/_mocha -- --recursive",
-    "doc": "jsdoc core/ -r -d doc"
+    "doc": "jsdoc core/ -r -d doc",
+    "postinstall":"bower install"
   },
   "dependencies": {
     "bower": "^1.7.9",
