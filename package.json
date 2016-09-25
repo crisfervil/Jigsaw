@@ -15,7 +15,6 @@
     "doc": "jsdoc core/ -r -d doc"
   },
   "dependencies": {
-    "bower": "^1.7.9",
     "debug": "^2.2.0",
     "ejs": "^2.3.4",
     "express": "^4.14.0",
