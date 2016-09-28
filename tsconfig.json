@@ -4,6 +4,7 @@
         "module": "commonjs",
         "moduleResolution": "node",
         "isolatedModules": false,
+        "sourceMap": true,
         "jsx": "react",
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
